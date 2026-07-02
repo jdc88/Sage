@@ -1,0 +1,335 @@
+@import "tailwindcss";
+
+@theme {
+  /* Sage Clinical Agent palette */
+  --color-sage-500: #647b6a;
+  --color-sage-400: #869b8b;
+  --color-sage-300: #91a596;
+  --color-sage-200: #9cb5ad;
+  --color-sage-100: #a9baab;
+  --color-sage-50: #eef3ef;
+  --color-sage-25: #f7faf8;
+  --color-sage-900: #2e4738;
+  --color-sage-950: #2e4738;
+  --color-sage-dark-light: #f4f1ea;
+  --color-sage-dark-mid: #6f8d77;
+  --color-sage-dark-deep: #2e4738;
+  --color-sage-dark-text: #f4f1ea;
+  --color-sage-dark-text-muted: #e8e4dc;
+  --color-sage-ivory: #f4f1ea;
+  --color-sage-ivory-muted: #e8e4dc;
+  --color-sage-ivory-heading: #ffffff;
+
+  /* Light mode foundation */
+  --color-slate-5: #fcfdfc;
+  --color-slate-50: #f7faf8;
+  --color-slate-100: #eef3ef;
+  --color-slate-150: #e4ece6;
+  --color-slate-200: #d7e1da;
+  --color-slate-250: #c6d3c9;
+  --color-slate-300: #a9baab;
+  --color-slate-400: #869b8b;
+  --color-slate-450: #748879;
+  --color-slate-455: #6b7f70;
+  --color-slate-460: #647b6a;
+  --color-slate-500: #516353;
+  --color-slate-600: #39463b;
+  --color-slate-700: #243129;
+  --color-slate-800: #6f8d77;
+  --color-slate-850: #4f6d5c;
+  --color-slate-900: #3d5a4a;
+  --color-slate-950: #2e4738;
+
+  /* Accent scales built from the requested sage tones */
+  --color-teal-50: #f7faf8;
+  --color-teal-100: #eef3ef;
+  --color-teal-200: #d7e1da;
+  --color-teal-300: #a9baab;
+  --color-teal-400: #9cb5ad;
+  --color-teal-500: #869b8b;
+  --color-teal-600: #647b6a;
+  --color-teal-700: #516353;
+  --color-teal-800: #6f8d77;
+  --color-teal-900: #3d5a4a;
+  --color-teal-950: #2e4738;
+
+  --color-emerald-50: #f7faf8;
+  --color-emerald-100: #eef3ef;
+  --color-emerald-200: #d7e1da;
+  --color-emerald-350: #bfd0c2;
+  --color-emerald-400: #9cb5ad;
+  --color-emerald-500: #869b8b;
+  --color-emerald-600: #516353;
+  --color-emerald-700: #39463b;
+  --color-emerald-800: #6f8d77;
+  --color-emerald-900: #3d5a4a;
+  --color-emerald-950: #2e4738;
+
+  --color-blue-50: #f5f8f6;
+  --color-blue-100: #e8efea;
+  --color-blue-200: #cfdbd3;
+  --color-blue-300: #a9baab;
+  --color-blue-400: #91a596;
+  --color-blue-500: #647b6a;
+  --color-blue-600: #516353;
+  --color-blue-700: #39463b;
+  --color-blue-800: #243129;
+  --color-blue-900: #1a231d;
+  --color-blue-950: #111813;
+
+  /* Supporting semantic colors tuned for contrast */
+  --color-amber-50: #faf7ef;
+  --color-amber-100: #f1e7cd;
+  --color-amber-200: #e3cf99;
+  --color-amber-300: #d2b164;
+  --color-amber-400: #bb9442;
+  --color-amber-500: #9a7530;
+  --color-amber-600: #7e5f26;
+  --color-amber-700: #644b1f;
+  --color-amber-800: #4b3819;
+  --color-amber-900: #352813;
+  --color-amber-950: #21180c;
+
+  --color-rose-50: #fbf4f2;
+  --color-rose-100: #f5e2dc;
+  --color-rose-200: #e9c0b5;
+  --color-rose-300: #d99685;
+  --color-rose-400: #c66f5e;
+  --color-rose-500: #a65143;
+  --color-rose-600: #874136;
+  --color-rose-700: #6c342c;
+  --color-rose-800: #542822;
+  --color-rose-900: #3b1d18;
+  --color-rose-950: #23110f;
+
+  --color-indigo-50: #f7f7f6;
+  --color-indigo-100: #ebece8;
+  --color-indigo-200: #d6d9d2;
+  --color-indigo-300: #bbc0b4;
+  --color-indigo-400: #9aa191;
+  --color-indigo-500: #7b826f;
+  --color-indigo-600: #636957;
+  --color-indigo-700: #4f5345;
+  --color-indigo-800: #3a3e33;
+  --color-indigo-900: #282b23;
+  --color-indigo-950: #181a15;
+}
+
+@layer base {
+  body {
+    @apply bg-slate-50 text-slate-700 transition-colors duration-200 font-sans antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply text-slate-700;
+  }
+
+  .dark body {
+    @apply bg-slate-950 text-sage-dark-text;
+  }
+
+  .dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
+    @apply text-sage-dark-text;
+  }
+
+  /* Crisp ivory / white text on dark green backgrounds (WCAG AA+) */
+  .dark .text-slate-700,
+  .dark .text-slate-850 {
+    color: #f4f1ea;
+  }
+
+  .dark .text-slate-600 {
+    color: #f4f1ea;
+  }
+
+  .dark .text-slate-500,
+  .dark .text-slate-450,
+  .dark .text-slate-455,
+  .dark .text-slate-460 {
+    color: #e8e4dc;
+  }
+
+  .dark .text-slate-400 {
+    color: #e8e4dc;
+  }
+
+  .dark .text-slate-300 {
+    color: #f4f1ea;
+  }
+
+  .dark .text-slate-200,
+  .dark .text-slate-100 {
+    color: #ffffff;
+  }
+
+  .dark :is(.dark\:text-slate-100, .dark\:text-slate-200, .dark\:text-slate-300) {
+    color: #ffffff;
+  }
+
+  .dark :is(.dark\:text-slate-400, .dark\:text-slate-500) {
+    color: #e8e4dc;
+  }
+
+  .dark .text-sage-dark-light,
+  .dark .text-sage-dark-text,
+  .dark .text-sage-ivory {
+    color: #f4f1ea;
+  }
+
+  .dark .text-sage-dark-mid,
+  .dark .text-sage-dark-text-muted,
+  .dark .text-sage-ivory-muted {
+    color: #e8e4dc;
+  }
+
+  .dark .text-slate-350 {
+    color: #f4f1ea;
+  }
+
+  /* Accent colors — WCAG AA on dark card surfaces (#2e4738 – #4f6d5c) */
+  .dark :is(.text-teal-500, .text-teal-600) {
+    color: #f4f1ea;
+  }
+
+  .dark :is(.text-teal-300, .text-teal-400) {
+    color: #ffffff;
+  }
+
+  .dark :is(.text-emerald-500, .text-emerald-600) {
+    color: #f4f1ea;
+  }
+
+  .dark :is(.text-emerald-300, .text-emerald-400) {
+    color: #ffffff;
+  }
+
+  .dark :is(.text-amber-500, .text-amber-600) {
+    color: #ffe8b0;
+  }
+
+  .dark :is(.text-rose-500, .text-rose-600, .text-rose-700) {
+    color: #ffd4cc;
+  }
+
+  .dark :is(.text-indigo-400, .text-indigo-500, .text-indigo-600, .text-indigo-700) {
+    color: #f4f1ea;
+  }
+
+  .dark .glass-panel,
+  .dark .glass-panel-heavy,
+  .dark .surface-card,
+  .dark .app-content {
+    color: #f4f1ea;
+  }
+
+  .dark .app-content :is(h1, h2, h3, h4, h5, h6) {
+    color: #ffffff;
+  }
+
+  /* Clinical status badges & alert pills on dark cards */
+  .dark :is(.sage-badge, .clinical-status) {
+    color: #f4f1ea;
+  }
+
+  .dark .clinical-status {
+    background-color: rgb(46 71 56 / 0.85);
+  }
+
+  .dark p,
+  .dark label,
+  .dark td,
+  .dark th,
+  .dark li,
+  .dark span:not([class*="text-"]) {
+    color: inherit;
+  }
+
+  .dark button:not([class*="text-white"]) {
+    color: inherit;
+  }
+}
+
+/* Custom scrollbar — earthy tones */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(111, 141, 119, 0.4);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(184, 203, 184, 0.55);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(111, 141, 119, 0.5);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(184, 203, 184, 0.65);
+}
+
+/* Custom animations */
+@keyframes pulse-soft {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: .92;
+    transform: scale(0.98);
+  }
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Panel surfaces — subtle borders, no heavy blur overlays */
+.glass-panel {
+  @apply bg-slate-50 border border-slate-300/70 shadow-sm transition-all duration-200;
+}
+
+.dark .glass-panel {
+  @apply bg-slate-900 border-sage-dark-mid/50 shadow-none;
+}
+
+.glass-panel-heavy {
+  @apply bg-slate-100 border border-slate-300/80 shadow-md transition-all duration-200;
+}
+
+.dark .glass-panel-heavy {
+  @apply bg-slate-850 border-sage-dark-mid/60 shadow-none;
+}
+
+/* Solid surface for content cards (replaces translucent overlays) */
+.surface-card {
+  @apply bg-white border border-slate-250/70 shadow-sm transition-all duration-150;
+}
+
+.dark .surface-card {
+  @apply bg-slate-850 border-sage-dark-mid/40;
+}
+
+/* Code editor glow effect */
+.terminal-glow {
+  box-shadow: inset 0 0 10px rgba(122, 154, 134, 0.08);
+}
+
+/* Sage status badge base */
+.sage-badge {
+  @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border;
+}
+
+.dark .sage-badge {
+  @apply text-sage-ivory;
+  background-color: rgb(46 71 56 / 0.85);
+  border-color: rgb(111 141 119 / 0.45);
+}
