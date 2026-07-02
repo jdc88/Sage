@@ -1,4 +1,4 @@
-# Sage Clinical Agent
+# Sage Clinical Agent 🌿
 
 A clinical automation dashboard that simulates an autonomous healthcare agent for ambient scribing, prior authorization, patient intake, clinical decision support (CDS), and revenue cycle management (RCM).
 
