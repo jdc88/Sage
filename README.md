@@ -6,7 +6,7 @@ Built as a single-page React application with live mock data streams, designed f
 
 ---
 
-## Problem (Neurology Case Study Example)
+## Problem (Neurology Example for Demo)
 
 Outpatient clinics face overlapping operational burdens that compete for physician attention:
 
