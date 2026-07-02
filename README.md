@@ -241,4 +241,4 @@ Potential extensions:
 
 ## License
 
-Private / submission use. Update this section if you publish under an open-source license.
+Private / submission use. Update this section if published under an open-source license.
