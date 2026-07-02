@@ -1,14 +1,14 @@
 # Sage Clinical Agent
 
-A neurology-focused clinical automation dashboard that simulates an autonomous healthcare agent for ambient scribing, prior authorization, patient intake, clinical decision support (CDS), and revenue cycle management (RCM).
+A clinical automation dashboard that simulates an autonomous healthcare agent for ambient scribing, prior authorization, patient intake, clinical decision support (CDS), and revenue cycle management (RCM).
 
 Built as a single-page React application with live mock data streams, designed for high readability in both light and dark modes.
 
 ---
 
-## Problem
+## Problem (Neurology Case Study Example)
 
-Outpatient neurology clinics face overlapping operational burdens that compete for physician attention:
+Outpatient clinics face overlapping operational burdens that compete for physician attention:
 
 | Challenge | Impact |
 |-----------|--------|
