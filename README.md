@@ -1,6 +1,6 @@
 # Sage Clinical Agent
 
-A neurology-focused clinical automation dashboard that simulates an autonomous healthcare agent for ambient scribing, prior authorization, patient intake, clinical decision support (CDS), and revenue cycle management (RCM).
+A neurology-focused clinical automation dashboard that simulates an autonomous healthcare agent for ambient scribing, prior authorization, patient intake, clinical decision support (CDS), and revenue cycle management (RCM) — backed by a demonstrated multi-agent system, MCP server inspector, security controls, and an Agents CLI (the **Agent Studio / ADK** console).
 
 Built as a single-page React application with live mock data streams, designed for high readability in both light and dark modes.
 
@@ -24,13 +24,18 @@ Legacy dashboards often use low-contrast dark themes, cardiology-centric telemet
 
 ## Solution
 
-**Sage Clinical Agent** unifies five clinical workflows into one readable dashboard for **Dr. Evelyn Young, Neurology Specialist**:
+**Sage Clinical Agent** unifies the clinical workflow into one readable dashboard for **Dr. Evelyn Young, Neurology Specialist**. The sidebar follows the real patient journey, step by step:
 
-1. **Overview** — KPIs, quick-launch navigation, and live agent activity stream
+- **Overview** — KPIs, patient-journey launchers, and live agent activity stream
+
+**Patient Journey**
+1. **Intake & Scheduling** — Patient queue with eligibility badges and intake analytics
 2. **Ambient Scribe** — Simulated live transcript + editable SOAP note compiler
 3. **Prior Auth Portal** — Claims pipeline with automation terminal (`SAGE_CLI_ENGINE`)
-4. **Intake & Scheduling** — Patient queue with eligibility badges and intake analytics
-5. **CDS Monitor & RCM** — Neurology CDS alerts (ICP, EEG) and billing ledger
+4. **CDS Monitor & RCM** — Neurology CDS alerts (ICP, EEG) and billing ledger
+
+**System**
+- **Agent Studio (ADK)** — Multi-agent topology, MCP server inspector, security posture (RBAC/PHI guard/vault/audit), and an interactive Agents CLI
 
 The UI uses a **Sage & Earthy Neutral** design system with WCAG AA contrast, organic leaf/sprout status iconography, and an EEG brainwave ticker (replacing cardiology ECG).
 
@@ -55,6 +60,8 @@ flowchart TB
     CTX --> CDS[CDS alerts + EEG stream]
     CTX --> RCM[RCM ledger]
     CTX --> Logs[Agent log stream]
+    CTX --> Agents[Agent / MCP / Security registries]
+    CTX --> CLI[runAgentCommand skill runner]
   end
 
   subgraph shell [Application Shell]
@@ -62,23 +69,33 @@ flowchart TB
     LAYOUT[Layout.jsx]
     APP --> LAYOUT
     LAYOUT --> Header[Header + EEG ticker]
-    LAYOUT --> Sidebar[Sidebar navigation]
+    LAYOUT --> Sidebar[Journey sidebar]
     LAYOUT --> Footer[System activity ticker]
   end
 
-  subgraph views [Feature Views]
+  subgraph views [Feature Views - Patient Journey]
     OV[Overview.jsx]
-    SV[ScribeView.jsx]
-    PA[PriorAuthView.jsx]
-    SCH[SchedulingView.jsx]
-    RCMV[RcmCdsView.jsx]
+    SCH[SchedulingView.jsx - Step 1]
+    SV[ScribeView.jsx - Step 2]
+    PA[PriorAuthView.jsx - Step 3]
+    RCMV[RcmCdsView.jsx - Step 4]
   end
+
+  subgraph studio [Agent Studio - ADK]
+    AS[AgentStudioView.jsx]
+    AS --> MA[MultiAgentView.jsx]
+    AS --> MCP[McpInspectorView.jsx]
+    AS --> SEC[SecurityView.jsx]
+    AS --> CLIV[AgentsCliView.jsx]
+  end
+
+  OV --> ACP[AgentConceptsPanel.jsx]
 
   HTML --> MAIN
   MAIN --> CTX
   MAIN --> APP
-  APP -->|activeTab switch| OV & SV & PA & SCH & RCMV
-  CTX -.->|useDashboard| LAYOUT & views
+  APP -->|activeTab switch| OV & SCH & SV & PA & RCMV & AS
+  CTX -.->|useDashboard| LAYOUT & views & studio & ACP
 ```
 
 ### Data flow (simulated streams)
@@ -119,19 +136,27 @@ agy-clinical-dashboard/
 │   ├── App.jsx              # Tab router + app-content wrapper
 │   ├── index.css            # Design tokens, dark-mode contrast, panel utilities
 │   ├── context/
-│   │   └── DashboardContext.jsx   # Mock data + live simulators
+│   │   └── DashboardContext.jsx   # Mock data + live simulators + agent/MCP/security registries
 │   └── components/
-│       ├── Layout.jsx       # Shell, header EEG ticker, sidebar, footer
-│       ├── ThemeToggle.jsx
-│       ├── Overview.jsx
-│       ├── ScribeView.jsx
-│       ├── PriorAuthView.jsx
-│       ├── SchedulingView.jsx
-│       └── RcmCdsView.jsx
+│       ├── Layout.jsx              # Shell, header EEG ticker, journey sidebar, footer
+│       ├── ThemeToggle.jsx         # Light/dark theme switch
+│       ├── Overview.jsx            # KPIs, patient-journey launchers, agent summary
+│       ├── AgentConceptsPanel.jsx  # Agent/MCP/security summary strip (used in Overview)
+│       ├── ScribeView.jsx          # [Step 2] Ambient transcript + SOAP editor
+│       ├── PriorAuthView.jsx       # [Step 3] Prior-auth pipeline + Agents CLI terminal
+│       ├── SchedulingView.jsx      # [Step 1] Intake queue + scheduling analytics
+│       ├── RcmCdsView.jsx          # [Step 4] CDS alerts + RCM billing ledger
+│       └── AgentStudioView.jsx     # ADK console shell (sub-tab router)
+│           ├── MultiAgentView.jsx   # Multi-agent orchestration topology
+│           ├── McpInspectorView.jsx # MCP server health + tool-call traces
+│           ├── SecurityView.jsx     # RBAC, PHI guard, vault, audit trail
+│           └── AgentsCliView.jsx    # Interactive skill-runner terminal
 ├── implementation_plan_v3.md
 ├── implementation_plan_neurology.md
 └── tasks.md
 ```
+
+> Note: `MultiAgentView`, `McpInspectorView`, `SecurityView`, and `AgentsCliView` are siblings of `AgentStudioView.jsx` in `src/components/`; they are nested above only to show that `AgentStudioView` composes them as sub-tabs.
 
 ---
 
@@ -197,10 +222,11 @@ npm run lint     # Run Oxlint
 ### Usage notes
 
 - **Theme toggle**: Moon icon = dark mode active; Sun icon = light mode active
-- **Navigation**: Use the sidebar to switch between the five clinical modules
+- **Navigation**: The sidebar is ordered as a numbered patient journey (1 → 4), with the **Agent Studio** technical console grouped separately under *System*
 - **Ambient Scribe**: Click *Start Ambient Session* on the Scribe view to stream mock dialogue into the SOAP editor
 - **Prior Auth terminal**: Background `[Portal Agent]` logs auto-scroll in the right-hand panel
 - **Intake**: Click *Verify* on pending patients to simulate eligibility checks
+- **Agent Studio**: Explore the multi-agent topology, MCP inspector, security controls, and run skills from the Agents CLI
 
 ---
 
