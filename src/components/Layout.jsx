@@ -23,14 +23,29 @@ export const Layout = ({ children }) => {
   // Take the most recent log for the footer ticker
   const latestLog = agentLogs[agentLogs.length - 1];
 
-  const navigationItems = [
-    { id: 'overview', name: 'Overview', icon: LayoutDashboard },
-    { id: 'scribe', name: 'Ambient Scribe', icon: Mic, badge: isRecording ? 'REC' : null },
-    { id: 'prior-auth', name: 'Prior Auth Portal', icon: FileCheck },
-    { id: 'intake', name: 'Intake & Scheduling', icon: Users },
-    { id: 'rcm-cds', name: 'CDS Monitor & RCM', icon: Activity },
-    { id: 'divider', name: '---', icon: null },
-    { id: 'agent-studio', name: 'Agent Studio', icon: Bot, badge: 'ADK' },
+  // Sidebar is organized to follow the real clinical journey, step by step.
+  const navGroups = [
+    {
+      label: null,
+      items: [
+        { id: 'overview', name: 'Overview', desc: 'Daily summary & status', icon: LayoutDashboard },
+      ],
+    },
+    {
+      label: 'Patient Journey',
+      items: [
+        { id: 'intake', name: 'Intake & Scheduling', desc: 'Booking & eligibility', icon: Users, step: 1 },
+        { id: 'scribe', name: 'Ambient Scribe', desc: 'Visit notes & SOAP', icon: Mic, step: 2, badge: isRecording ? 'REC' : null },
+        { id: 'prior-auth', name: 'Prior Auth Portal', desc: 'Insurance approvals', icon: FileCheck, step: 3 },
+        { id: 'rcm-cds', name: 'CDS Monitor & RCM', desc: 'Alerts & billing', icon: Activity, step: 4 },
+      ],
+    },
+    {
+      label: 'System',
+      items: [
+        { id: 'agent-studio', name: 'Agent Studio', desc: 'Agent, MCP & security console', icon: Bot, badge: 'ADK' },
+      ],
+    },
   ];
 
   return (
@@ -107,46 +122,59 @@ export const Layout = ({ children }) => {
             sidebarOpen ? 'w-64 translate-x-0' : 'w-0 -translate-x-full lg:w-20 lg:translate-x-0'
           }`}
         >
-          <div className="p-4 flex flex-col gap-6">
-            <div className="flex flex-col gap-1.5">
-              {navigationItems.map(item => {
-                if (item.id === 'divider') {
+          <div className="p-4 flex flex-col gap-5">
+            {navGroups.map((group, groupIdx) => (
+              <div key={group.label || `group-${groupIdx}`} className="flex flex-col gap-1.5">
+                {group.label && (
+                  <p className={`px-3 mb-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-sage-ivory-muted ${!sidebarOpen ? 'lg:hidden' : ''}`}>
+                    {group.label}
+                  </p>
+                )}
+                {group.items.map(item => {
+                  const Icon = item.icon;
+                  const isActive = activeTab === item.id;
                   return (
-                    <div key="divider" className={`my-1 border-t border-slate-200/60 dark:border-slate-700/40 ${!sidebarOpen ? 'lg:hidden' : ''}`} />
-                  );
-                }
-                const Icon = item.icon;
-                const isActive = activeTab === item.id;
-                const isAgentStudio = item.id === 'agent-studio';
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => setActiveTab(item.id)}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 text-left relative group ${
-                      isActive && isAgentStudio
-                        ? 'bg-teal-500/10 text-teal-600 dark:bg-slate-800 dark:text-sage-ivory font-semibold shadow-sm border border-teal-500/20 dark:border-sage-dark-mid/50'
-                        : isActive 
-                        ? 'bg-teal-500/10 text-teal-600 dark:bg-slate-800 dark:text-sage-ivory font-semibold shadow-sm border border-teal-500/20 dark:border-sage-dark-mid/50' 
-                        : 'text-slate-600 dark:text-sage-ivory-muted hover:bg-slate-150 dark:hover:bg-slate-900'
-                    }`}
-                  >
-                    <Icon className={`w-5 h-5 shrink-0 transition-transform group-hover:scale-105 ${isActive ? 'text-teal-500 dark:text-sage-ivory' : 'text-slate-400 dark:text-sage-ivory-muted'}`} />
-                    <span className={`text-sm tracking-wide transition-opacity duration-300 ${!sidebarOpen ? 'lg:opacity-0 lg:w-0 overflow-hidden' : 'opacity-100'}`}>
-                      {item.name}
-                    </span>
-                    {item.badge && (
-                      <span className={`ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
-                        item.badge === 'ADK' 
-                          ? 'bg-teal-500/20 text-teal-600 dark:bg-teal-900/40 dark:text-teal-400 border border-teal-400/30' 
-                          : 'bg-rose-500 text-white animate-pulse'
-                      } ${!sidebarOpen ? 'lg:hidden' : ''}`}>
-                        {item.badge}
+                    <button
+                      key={item.id}
+                      onClick={() => setActiveTab(item.id)}
+                      title={item.name}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 text-left relative group ${
+                        isActive
+                          ? 'bg-teal-500/10 text-teal-600 dark:bg-slate-800 dark:text-sage-ivory font-semibold shadow-sm border border-teal-500/20 dark:border-sage-dark-mid/50'
+                          : 'text-slate-600 dark:text-sage-ivory-muted hover:bg-slate-150 dark:hover:bg-slate-900'
+                      }`}
+                    >
+                      <Icon className={`w-5 h-5 shrink-0 transition-transform group-hover:scale-105 ${isActive ? 'text-teal-500 dark:text-sage-ivory' : 'text-slate-400 dark:text-sage-ivory-muted'}`} />
+                      <span className={`flex flex-col min-w-0 transition-opacity duration-300 ${!sidebarOpen ? 'lg:opacity-0 lg:w-0 overflow-hidden' : 'opacity-100'}`}>
+                        <span className="text-sm tracking-wide leading-tight truncate">{item.name}</span>
+                        {item.desc && (
+                          <span className={`text-[10px] leading-tight truncate ${isActive ? 'text-teal-600/70 dark:text-sage-ivory-muted' : 'text-slate-400 dark:text-sage-ivory-muted'}`}>
+                            {item.desc}
+                          </span>
+                        )}
                       </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
+                      {item.badge ? (
+                        <span className={`ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
+                          item.badge === 'ADK'
+                            ? 'bg-teal-500/20 text-teal-600 dark:bg-teal-900/40 dark:text-teal-400 border border-teal-400/30'
+                            : 'bg-rose-500 text-white animate-pulse'
+                        } ${!sidebarOpen ? 'lg:hidden' : ''}`}>
+                          {item.badge}
+                        </span>
+                      ) : item.step ? (
+                        <span className={`ml-auto shrink-0 w-5 h-5 flex items-center justify-center text-[10px] font-bold rounded-full border ${
+                          isActive
+                            ? 'bg-teal-500 text-white border-teal-500'
+                            : 'bg-slate-100 text-slate-500 border-slate-300/60 dark:bg-slate-800 dark:text-sage-ivory-muted dark:border-slate-700'
+                        } ${!sidebarOpen ? 'lg:hidden' : ''}`}>
+                          {item.step}
+                        </span>
+                      ) : null}
+                    </button>
+                  );
+                })}
+              </div>
+            ))}
           </div>
 
           {/* Sidebar Footer - Agent Status */}

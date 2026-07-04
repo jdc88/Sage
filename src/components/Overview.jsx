@@ -142,67 +142,38 @@ export const Overview = () => {
         <div className="lg:col-span-6 flex flex-col gap-4">
           <div className="glass-panel rounded-2xl p-5 flex flex-col justify-between h-[360px]">
             <div>
-              <h3 className="font-bold text-slate-700 dark:text-slate-100 text-sm">Sage Clinical Agent — Quick Launchers</h3>
-              <p className="text-[10px] text-slate-600">Navigate directly to clinical agent pipelines</p>
+              <h3 className="font-bold text-slate-700 dark:text-slate-100 text-sm">The Patient Journey</h3>
+              <p className="text-[10px] text-slate-600 dark:text-slate-400">Follow a case from check-in to payment — one step at a time</p>
             </div>
 
             <div className="grid grid-cols-2 gap-4 my-4">
-              
-              <button 
-                onClick={() => setActiveTab('scribe')}
-                className="p-4 rounded-xl border border-slate-300/60 dark:border-slate-700 hover:border-teal-500/50 hover:bg-slate-150 dark:hover:bg-slate-900 text-left flex flex-col gap-2 transition-all group"
-              >
-                <Mic className="w-5 h-5 text-teal-500 group-hover:scale-105 transition-transform" />
-                <div>
-                  <h4 className="text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center justify-between">
-                    Ambient Scribe
-                    <ArrowUpRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </h4>
-                  <p className="text-[10px] text-slate-600 mt-0.5 leading-normal">Dictation listener & SOAP note compiler</p>
-                </div>
-              </button>
 
-              <button 
-                onClick={() => setActiveTab('prior-auth')}
-                className="p-4 rounded-xl border border-slate-300/60 dark:border-slate-700 hover:border-teal-500/50 hover:bg-slate-150 dark:hover:bg-slate-900 text-left flex flex-col gap-2 transition-all group"
-              >
-                <FileCheck className="w-5 h-5 text-indigo-500 group-hover:scale-105 transition-transform" />
-                <div>
-                  <h4 className="text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center justify-between">
-                    Prior Auth Portal
-                    <ArrowUpRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </h4>
-                  <p className="text-[10px] text-slate-600 mt-0.5 leading-normal">Monitor web portals and claim documents</p>
-                </div>
-              </button>
-
-              <button 
-                onClick={() => setActiveTab('intake')}
-                className="p-4 rounded-xl border border-slate-300/60 dark:border-slate-700 hover:border-teal-500/50 hover:bg-slate-150 dark:hover:bg-slate-900 text-left flex flex-col gap-2 transition-all group"
-              >
-                <UserPlus className="w-5 h-5 text-rose-500 group-hover:scale-105 transition-transform" />
-                <div>
-                  <h4 className="text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center justify-between">
-                    Intake & Check-in
-                    <ArrowUpRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </h4>
-                  <p className="text-[10px] text-slate-600 mt-0.5 leading-normal">Manage patient scheduling & eligibility checks</p>
-                </div>
-              </button>
-
-              <button 
-                onClick={() => setActiveTab('rcm-cds')}
-                className="p-4 rounded-xl border border-slate-300/60 dark:border-slate-700 hover:border-teal-500/50 hover:bg-slate-150 dark:hover:bg-slate-900 text-left flex flex-col gap-2 transition-all group"
-              >
-                <Activity className="w-5 h-5 text-amber-500 group-hover:scale-105 transition-transform" />
-                <div>
-                  <h4 className="text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center justify-between">
-                    CDS & RCM
-                    <ArrowUpRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </h4>
-                  <p className="text-[10px] text-slate-600 mt-0.5 leading-normal">Review neurology CDS stream alerts & appeals billing</p>
-                </div>
-              </button>
+              {[
+                { step: 1, id: 'intake', name: 'Intake & Scheduling', desc: 'Booking & eligibility checks', icon: UserPlus, color: 'text-rose-500' },
+                { step: 2, id: 'scribe', name: 'Ambient Scribe', desc: 'Visit transcription & SOAP notes', icon: Mic, color: 'text-teal-500' },
+                { step: 3, id: 'prior-auth', name: 'Prior Auth Portal', desc: 'Automated insurance approvals', icon: FileCheck, color: 'text-indigo-500' },
+                { step: 4, id: 'rcm-cds', name: 'CDS Monitor & RCM', desc: 'Clinical alerts & billing', icon: Activity, color: 'text-amber-500' },
+              ].map(({ step, id, name, desc, icon: Icon, color }) => (
+                <button
+                  key={id}
+                  onClick={() => setActiveTab(id)}
+                  className="p-4 rounded-xl border border-slate-300/60 dark:border-slate-700 hover:border-teal-500/50 hover:bg-slate-150 dark:hover:bg-slate-900 text-left flex flex-col gap-2 transition-all group"
+                >
+                  <div className="flex items-center justify-between">
+                    <Icon className={`w-5 h-5 ${color} group-hover:scale-105 transition-transform`} />
+                    <span className="w-5 h-5 flex items-center justify-center text-[10px] font-bold rounded-full bg-slate-100 text-slate-500 border border-slate-300/60 dark:bg-slate-800 dark:text-sage-ivory-muted dark:border-slate-700">
+                      {step}
+                    </span>
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center justify-between">
+                      {name}
+                      <ArrowUpRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </h4>
+                    <p className="text-[10px] text-slate-600 dark:text-slate-400 mt-0.5 leading-normal">{desc}</p>
+                  </div>
+                </button>
+              ))}
 
             </div>
           </div>

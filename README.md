@@ -242,3 +242,7 @@ Potential extensions:
 ## License
 
 Private / submission use. Update this section if you publish under an open-source license.
+
+---
+
+© 2026 Josephine Choi. All rights reserved.
