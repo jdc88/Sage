@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useDashboard } from '../context/DashboardContext';
 import { AGENT_SKILLS } from '../context/DashboardContext';
+import { isBackendConfigured, runAgentCommandRemote } from '../api/agentApi';
 import { Terminal, ChevronRight, CornerDownLeft, Clock, Layers, ShieldCheck, PlugZap, Bot, Wrench } from 'lucide-react';
 
 const SKILL_CATEGORY_COLORS = {
@@ -62,24 +63,48 @@ export const AgentsCliView = () => {
     }
   };
 
-  const submit = (cmd) => {
+  const submit = async (cmd) => {
     const command = (cmd || input).trim();
     if (!command) return;
 
     const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-    // Add user input line
     const userEntry = { id: Date.now(), text: `$ ${command}`, type: 'user-input', time };
     setCliOutput(prev => [...prev, userEntry]);
 
-    // Run and collect response entries
-    const responseEntries = runAgentCommand(command) || [];
-    const formatted = responseEntries.map((e, i) => ({
-      id: e.id || Date.now() + i + 1,
-      text: e.text,
-      type: e.type,
-      time: e.time || time,
-    }));
+    let formatted = [];
+
+    if (isBackendConfigured()) {
+      try {
+        const remote = await runAgentCommandRemote(command);
+        formatted = (remote?.logs || []).map((e, i) => ({
+          id: Date.now() + i + 1,
+          text: e.text,
+          type: e.type,
+          time,
+        }));
+      } catch {
+        formatted = (runAgentCommand(command) || []).map((e, i) => ({
+          id: e.id || Date.now() + i + 1,
+          text: e.text,
+          type: e.type,
+          time: e.time || time,
+        }));
+        formatted.unshift({
+          id: Date.now() - 1,
+          text: '[Agents CLI] Backend unavailable — using local simulator.',
+          type: 'system',
+          time,
+        });
+      }
+    } else {
+      formatted = (runAgentCommand(command) || []).map((e, i) => ({
+        id: e.id || Date.now() + i + 1,
+        text: e.text,
+        type: e.type,
+        time: e.time || time,
+      }));
+    }
 
     setCliOutput(prev => [...prev, ...formatted, { id: Date.now() + 9999, text: '', type: 'system', time: '' }]);
     setHistory(prev => [command, ...prev].slice(0, 50));

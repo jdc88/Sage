@@ -36,6 +36,69 @@ const INITIAL_QUEUE = [
   { id: 'PT-05', name: 'Robert Bruce', time: '11:00 AM', reason: 'Neuromuscular Weakness Evaluation', status: 'Ineligible', copay: '$50', verifiedAt: '09:30 AM (In-network issue)' }
 ];
 
+const buildPatientEncounters = () => ({
+  'PT-01': {
+    activeEncounterStep: 'scribe',
+    noteLocked: false,
+    isRecording: false,
+    scribeIndex: 1,
+    transcript: [MOCK_SCRIBE_STREAM[0]],
+    soapNote: { ...INITIAL_SOAP_NOTE },
+  },
+  'PT-02': {
+    activeEncounterStep: 'scribe',
+    noteLocked: false,
+    isRecording: false,
+    scribeIndex: 0,
+    transcript: [],
+    soapNote: {
+      subjective: 'Sarah, 34-year-old female, presents with 3 weeks of new daily headaches with visual aura. No prior migraine history.',
+      objective: 'Neuro exam unremarkable. Fundoscopic exam normal. Ambulatory EEG pending.',
+      assessment: '1. New onset headache with aura (ICD-10: G43.909) — rule out secondary causes.',
+      plan: '1. Order Brain MRI without contrast (CPT 70551).\n2. Routine EEG (CPT 95816).\n3. Headache diary for 2 weeks.',
+    },
+  },
+  'PT-03': {
+    activeEncounterStep: 'intake',
+    noteLocked: false,
+    isRecording: false,
+    scribeIndex: 0,
+    transcript: [],
+    soapNote: {
+      subjective: '',
+      objective: '',
+      assessment: '',
+      plan: '',
+    },
+  },
+  'PT-04': {
+    activeEncounterStep: 'prior-auth',
+    noteLocked: true,
+    isRecording: false,
+    scribeIndex: 0,
+    transcript: [],
+    soapNote: {
+      subjective: 'Diana reports 2 breakthrough seizures in the past month on current levetiracetam dose.',
+      objective: 'EEG: stable background rhythm. Antiepileptic level within range.',
+      assessment: '1. Epilepsy, partial onset (ICD-10: G40.109) — breakthrough events.',
+      plan: '1. Increase levetiracetam to 750mg BID.\n2. Prior auth for vEEG if seizures persist.',
+    },
+  },
+  'PT-05': {
+    activeEncounterStep: 'intake',
+    noteLocked: false,
+    isRecording: false,
+    scribeIndex: 0,
+    transcript: [],
+    soapNote: {
+      subjective: '',
+      objective: '',
+      assessment: '',
+      plan: '',
+    },
+  },
+});
+
 const INITIAL_CDS_ALERTS = [
   { id: 'CDS-1', patient: 'Arthur Pendelton', type: 'ICP Trend', value: '11 mmHg', severity: 'warning', msg: 'ICP approaching upper normal limit; correlate with headache diary and neuro imaging', time: '09:03 AM' },
   { id: 'CDS-2', patient: 'Robert Bruce', type: 'EEG Spike Activity', value: 'Focal temporal', severity: 'info', msg: 'Intermittent focal temporal sharp waves on ambulatory EEG stream', time: '09:12 AM' }
@@ -150,6 +213,7 @@ export const SECURITY_CONTROLS = [
   { id: 'vault', name: 'Credential vault', status: 'healthy', detail: 'Portal credentials represented as vaulted secrets, never shown in UI.' },
   { id: 'audit', name: 'Audit trail', status: 'streaming', detail: 'All agent actions append to immutable system activity logs.' },
   { id: 'phi', name: 'PHI redaction guard', status: 'active', detail: 'CLI and logs redact secret-bearing commands and sensitive tokens.' },
+  { id: 'injection', name: 'Prompt injection guard', status: 'active', detail: 'Blocks adversarial instructions in clinical notes and prior-auth text before agent tools run.' },
 ];
 
 export const AGENT_SKILLS = [
@@ -158,6 +222,7 @@ export const AGENT_SKILLS = [
   { id: 'mcp.ping', command: '/mcp ping', description: 'Ping all MCP servers and display latency.', category: 'mcp' },
   { id: 'security.audit', command: '/security audit', description: 'Run a simulated security posture check.', category: 'security' },
   { id: 'security.phi', command: '/security phi-log', description: 'Display recent PHI redaction events.', category: 'security' },
+  { id: 'security.injection', command: '/security injection-test', description: 'Test prompt-injection detection on sample adversarial text.', category: 'security' },
   { id: 'skill.intake.verify', command: '/skill run intake.verify PT-03', description: 'Execute eligibility verification skill for a queued patient.', category: 'skill' },
   { id: 'skill.rcm.appeal', command: '/skill run rcm.appeal RCM-101', description: 'Dispatch an RCM appeal workflow skill.', category: 'skill' },
   { id: 'skill.soap.generate', command: '/skill run soap.generate', description: 'Request scribe agent to finalize the current SOAP note.', category: 'skill' },
@@ -232,15 +297,13 @@ const MCP_CALL_TEMPLATES = [
 ];
 
 export const DashboardProvider = ({ children }) => {
-  // Theme & Navigation State
-  const [theme, setTheme] = useState('light');
-  const [activeTab, setActiveTab] = useState('overview');
+  // Navigation State
+  const [activeTab, setActiveTab] = useState('clinical');
 
-  // Ambient Scribe View State
-  const [isRecording, setIsRecording] = useState(false);
-  const [transcript, setTranscript] = useState([MOCK_SCRIBE_STREAM[0]]);
-  const [soapNote, setSoapNote] = useState(INITIAL_SOAP_NOTE);
-  const [scribeIndex, setScribeIndex] = useState(1);
+  const [activePatientId, setActivePatientId] = useState('PT-01');
+  const activePatientIdRef = useRef('PT-01');
+  const [patientEncounters, setPatientEncounters] = useState(buildPatientEncounters);
+  const [dismissedAlertIds, setDismissedAlertIds] = useState([]);
 
   // Prior Auth & Claims Manager State
   const [claims, setClaims] = useState(INITIAL_CLAIMS);
@@ -342,21 +405,62 @@ export const DashboardProvider = ({ children }) => {
     ],
   });
 
-  // Toggle Theme helper
-  const toggleTheme = () => {
-    const nextTheme = theme === 'dark' ? 'light' : 'dark';
-    setTheme(nextTheme);
-    if (nextTheme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  };
-
-  // Default to the light sage theme on first load
+  // Ensure light mode only
   useEffect(() => {
     document.documentElement.classList.remove('dark');
   }, []);
+
+  const updateEncounter = (patientId, patch) => {
+    setPatientEncounters(prev => ({
+      ...prev,
+      [patientId]: { ...prev[patientId], ...patch },
+    }));
+  };
+
+  const emptyEncounter = {
+    activeEncounterStep: 'intake',
+    noteLocked: false,
+    isRecording: false,
+    scribeIndex: 0,
+    transcript: [],
+    soapNote: { subjective: '', objective: '', assessment: '', plan: '' },
+  };
+
+  const activeEncounter = patientEncounters[activePatientId] || patientEncounters['PT-01'] || emptyEncounter;
+  const {
+    activeEncounterStep,
+    noteLocked,
+    isRecording,
+    scribeIndex,
+    transcript,
+    soapNote,
+  } = activeEncounter;
+
+  const setActiveEncounterStep = (step) => updateEncounter(activePatientId, { activeEncounterStep: step });
+
+  const setIsRecording = (value) => {
+    updateEncounter(activePatientId, {
+      isRecording: typeof value === 'function' ? value(isRecording) : value,
+    });
+  };
+
+  const resetScribeSession = () => {
+    updateEncounter(activePatientId, {
+      transcript: [MOCK_SCRIBE_STREAM[0]],
+      scribeIndex: 1,
+      isRecording: true,
+    });
+  };
+
+  const updateSoapNoteSection = (section, value) => {
+    setPatientEncounters(prev => ({
+      ...prev,
+      [activePatientId]: {
+        ...prev[activePatientId],
+        soapNote: { ...prev[activePatientId].soapNote, [section]: value },
+      },
+    }));
+  };
 
   // EEG live animation simulator (neurology CDS stream ticker)
   useEffect(() => {
@@ -496,38 +600,53 @@ export const DashboardProvider = ({ children }) => {
 
   // Ambient Scribe Live Transcript Streaming Simulation
   useEffect(() => {
-    if (!isRecording) return;
+    if (!isRecording || activePatientId !== 'PT-01') return;
 
     const interval = setInterval(() => {
-      if (scribeIndex < MOCK_SCRIBE_STREAM.length) {
-        setTranscript(prev => [...prev, MOCK_SCRIBE_STREAM[scribeIndex]]);
-        setScribeIndex(prev => prev + 1);
-
-        setAgentLogs(prev => [
-          ...prev,
+      setPatientEncounters(prev => {
+        const enc = prev[activePatientId];
+        if (!enc) return prev;
+        if (enc.scribeIndex >= MOCK_SCRIBE_STREAM.length) {
+          if (enc.isRecording) {
+            setAgentLogs(logs => [
+              ...logs,
+              {
+                id: logs.length + 1,
+                text: '[Scribe Agent] Scribe session complete. Structured clinical SOAP note finalized and verified.',
+                type: 'success',
+                time: nowTime(),
+              },
+            ]);
+          }
+          return {
+            ...prev,
+            [activePatientId]: { ...enc, isRecording: false },
+          };
+        }
+        const idx = enc.scribeIndex;
+        setAgentLogs(logs => [
+          ...logs,
           {
-            id: prev.length + 1,
-            text: `[Scribe Agent] Appending dialogue block from ${MOCK_SCRIBE_STREAM[scribeIndex].speaker}...`,
+            id: logs.length + 1,
+            text: `[Scribe Agent] Appending dialogue block from ${MOCK_SCRIBE_STREAM[idx].speaker}...`,
             type: 'scribe',
-            time: nowTime()
-          }
+            time: nowTime(),
+          },
         ]);
-      } else {
-        setIsRecording(false);
-        setAgentLogs(prev => [
+        return {
           ...prev,
-          {
-            id: prev.length + 1,
-            text: "[Scribe Agent] Scribe session complete. Structured clinical SOAP note finalized and verified.",
-            type: 'success',
-            time: nowTime()
-          }
-        ]);
-      }
+          [activePatientId]: {
+            ...enc,
+            transcript: [...enc.transcript, MOCK_SCRIBE_STREAM[idx]],
+            scribeIndex: idx + 1,
+            isRecording: idx + 1 < MOCK_SCRIBE_STREAM.length,
+          },
+        };
+      });
     }, 4500);
 
     return () => clearInterval(interval);
-  }, [isRecording, scribeIndex]);
+  }, [isRecording, activePatientId]);
 
   // Background Web Portal Prior Auth Agent logs simulator
   useEffect(() => {
@@ -561,9 +680,11 @@ export const DashboardProvider = ({ children }) => {
     return () => clearInterval(interval);
   }, []);
 
-  // Live CDS neurology alerts generator
+  // Live CDS neurology alerts generator — scoped to active patient only
   useEffect(() => {
     const alertTimer = setInterval(() => {
+      const activeId = activePatientIdRef.current;
+      const activeName = INITIAL_QUEUE.find(p => p.id === activeId)?.name || 'Arthur Pendelton';
       const alertTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       const alertVariants = [
         { type: 'EEG Alpha Suppression', value: 'Theta-dominant', msg: 'Transient alpha wave suppression detected on ambulatory EEG stream during scribe session.' },
@@ -573,33 +694,19 @@ export const DashboardProvider = ({ children }) => {
       const variant = alertVariants[Math.floor(Math.random() * alertVariants.length)];
       const newAlert = {
         id: `CDS-${Date.now()}`,
-        patient: 'Sarah Jenkins',
+        patient: activeName,
+        patientId: activeId,
         type: variant.type,
         value: variant.value,
         severity: Math.random() > 0.4 ? 'warning' : 'danger',
         msg: variant.msg,
         time: alertTime
       };
-      setCdsAlerts(prev => [newAlert, ...prev].slice(0, 5));
-    }, 18000);
+      setCdsAlerts(prev => [newAlert, ...prev.filter(a => a.patientId === activeId || a.patient === activeName)].slice(0, 3));
+    }, 45000);
 
     return () => clearInterval(alertTimer);
   }, []);
-
-  // Restart scribe simulation function
-  const resetScribeSession = () => {
-    setTranscript([MOCK_SCRIBE_STREAM[0]]);
-    setScribeIndex(1);
-    setIsRecording(true);
-  };
-
-  // Scribe SOAP Note change handler
-  const updateSoapNoteSection = (section, value) => {
-    setSoapNote(prev => ({
-      ...prev,
-      [section]: value
-    }));
-  };
 
   // Eligibility check trigger
   const triggerEligibilityCheck = (patientId) => {
@@ -768,12 +875,66 @@ export const DashboardProvider = ({ children }) => {
     return newEntries;
   };
 
+  const currentPatient = patientQueue.find(p => p.id === activePatientId) || patientQueue[0];
+
+  const thresholdAlerts = cdsAlerts.filter(
+    a => (a.severity === 'danger' || a.severity === 'warning')
+      && !dismissedAlertIds.includes(a.id)
+      && a.patient === currentPatient?.name
+  );
+
+  const activePatientAlerts = thresholdAlerts;
+
+  const cdsStreamStatus = activePatientAlerts.some(a => a.severity === 'danger')
+    ? 'critical'
+    : activePatientAlerts.length > 0
+    ? 'warning'
+    : 'stable';
+
+  const dismissAlert = (id) => {
+    setDismissedAlertIds(prev => (prev.includes(id) ? prev : [...prev, id]));
+  };
+
+  const setActivePatient = (id) => {
+    setActivePatientId(id);
+    activePatientIdRef.current = id;
+  };
+
+  // Backward-compatible aliases
+  const setCurrentPatient = setActivePatient;
+  const currentPatientId = activePatientId;
+
+  const lockNote = () => {
+    updateEncounter(activePatientId, { noteLocked: true });
+    setAgentLogs(prev => [
+      ...prev,
+      {
+        id: prev.length + 1,
+        text: `[Scribe] SOAP note locked for ${currentPatient?.name || 'patient'}.`,
+        type: 'success',
+        time: nowTime(),
+      },
+    ]);
+  };
+
   return (
     <DashboardContext.Provider value={{
-      theme,
-      toggleTheme,
       activeTab,
       setActiveTab,
+      activePatientId,
+      setActivePatient,
+      currentPatientId,
+      currentPatient,
+      setCurrentPatient,
+      activeEncounterStep,
+      setActiveEncounterStep,
+      dismissedAlertIds,
+      dismissAlert,
+      thresholdAlerts,
+      activePatientAlerts,
+      cdsStreamStatus,
+      noteLocked,
+      lockNote,
       isRecording,
       setIsRecording,
       transcript,

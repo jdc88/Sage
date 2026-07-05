@@ -67,14 +67,11 @@ export const AgentStudioView = () => {
       {/* Page Title */}
       <div className="glass-panel-heavy rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-l-4 border-l-teal-500">
         <div className="space-y-1">
-          <h2 className="text-lg font-bold tracking-tight text-slate-700 dark:text-slate-100 m-0 flex items-center gap-2">
-            Agent Studio
-            <span className="text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded-md bg-teal-500/10 text-teal-600 dark:bg-slate-800 dark:text-sage-ivory border border-teal-500/20 dark:border-sage-dark-mid/50">
-              ADK
-            </span>
+          <h2 className="text-lg font-bold tracking-tight text-slate-700 dark:text-slate-100 m-0">
+            Tech Console
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xl">
-            Inspect and interact with the multi-agent system powering Sage Clinical Agent — topology, MCP servers, security controls, and the agent CLI.
+            ADK debugging — multi-agent topology, MCP, security, and Agents CLI. Not for use during patient care.
           </p>
         </div>
 

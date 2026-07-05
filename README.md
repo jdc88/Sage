@@ -153,6 +153,11 @@ agy-clinical-dashboard/
 │           └── AgentsCliView.jsx    # Interactive skill-runner terminal
 ├── implementation_plan_v3.md
 ├── implementation_plan_neurology.md
+├── backend/                     # Google ADK + security API (FastAPI, Cloud Run)
+│   ├── main.py
+│   ├── agents/orchestrator/     # ADK agent stub + policy-gated tools
+│   ├── security/                # PHI guard, injection guard, audit
+│   └── README.md                # Setup, deploy, API docs
 └── tasks.md
 ```
 
@@ -227,6 +232,7 @@ npm run lint     # Run Oxlint
 - **Prior Auth terminal**: Background `[Portal Agent]` logs auto-scroll in the right-hand panel
 - **Intake**: Click *Verify* on pending patients to simulate eligibility checks
 - **Agent Studio**: Explore the multi-agent topology, MCP inspector, security controls, and run skills from the Agents CLI
+- **Backend API (optional)**: See [`backend/README.md`](backend/README.md) for Google ADK + PHI/injection guards on Cloud Run. Set `VITE_AGENT_API_URL=http://localhost:8080` in `.env.local` to connect the Agents CLI to the backend.
 
 ---
 

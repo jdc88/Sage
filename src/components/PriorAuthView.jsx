@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useDashboard } from '../context/DashboardContext';
 import { Terminal, Leaf, Sprout, HelpCircle, AlertCircle, Send, Bot, ShieldCheck } from 'lucide-react';
 
-export const PriorAuthView = () => {
+export const PriorAuthView = ({ clinicalMode = false, patientName }) => {
   const { claims, agentLogs, runAgentCommand, agentSkills } = useDashboard();
   const [filter, setFilter] = useState('All');
   const [commandInput, setCommandInput] = useState('/agents list');
@@ -17,9 +17,13 @@ export const PriorAuthView = () => {
   }, [agentLogs]);
 
   // Filtered claims
-  const filteredClaims = filter === 'All' 
-    ? claims 
-    : claims.filter(c => c.status === filter);
+  const scopedClaims = clinicalMode && patientName
+    ? claims.filter(c => c.patient === patientName)
+    : claims;
+
+  const filteredClaims = filter === 'All'
+    ? scopedClaims
+    : scopedClaims.filter(c => c.status === filter);
 
   // Colors for claims status
   const getStatusStyles = (status) => {
@@ -53,11 +57,9 @@ export const PriorAuthView = () => {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-      
-      {/* Prior Auth pipeline grid */}
-      <div className="lg:col-span-7 flex flex-col gap-4">
-        <div className="glass-panel rounded-2xl p-5 flex flex-col h-[550px]">
+    <div className={`grid grid-cols-1 ${clinicalMode ? '' : 'lg:grid-cols-12'} gap-8`}>
+      <div className={`${clinicalMode ? '' : 'lg:col-span-7'} flex flex-col gap-4`}>
+        <div className={`surface-card rounded-2xl p-6 flex flex-col ${clinicalMode ? '' : 'h-[550px]'}`}>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200/50 dark:border-slate-800/50 shrink-0">
             <div>
               <h3 className="font-bold text-slate-700 dark:text-slate-100 text-sm">Prior Authorizations</h3>
@@ -84,7 +86,12 @@ export const PriorAuthView = () => {
 
           {/* Claims Grid Content */}
           <div className="flex-1 overflow-y-auto py-4 space-y-3 pr-1">
-            {filteredClaims.map((claim) => (
+            {filteredClaims.length === 0 ? (
+              <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-8">
+                No prior authorizations for this patient.
+              </p>
+            ) : (
+            filteredClaims.map((claim) => (
               <div 
                 key={claim.id} 
                 className="p-4 rounded-xl border border-slate-250/60 dark:border-slate-700 surface-card hover:border-teal-400/50 dark:hover:border-teal-600/40 transition-all duration-150 flex flex-col gap-3 group"
@@ -135,12 +142,13 @@ export const PriorAuthView = () => {
                   </div>
                 </div>
               </div>
-            ))}
+            ))
+            )}
           </div>
         </div>
       </div>
 
-      {/* Real-time Agent Automation Terminal Log */}
+      {!clinicalMode && (
       <div className="lg:col-span-5 flex flex-col gap-4">
         <div className="glass-panel rounded-2xl p-4 space-y-3">
           <div className="flex items-center justify-between gap-3">
@@ -250,6 +258,7 @@ export const PriorAuthView = () => {
           </div>
         </div>
       </div>
+      )}
 
     </div>
   );

@@ -123,130 +123,6 @@
   h1, h2, h3, h4, h5, h6 {
     @apply text-slate-700;
   }
-
-  .dark body {
-    @apply bg-slate-950 text-sage-dark-text;
-  }
-
-  .dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
-    @apply text-sage-dark-text;
-  }
-
-  /* Crisp ivory / white text on dark green backgrounds (WCAG AA+) */
-  .dark .text-slate-700,
-  .dark .text-slate-850 {
-    color: #f4f1ea;
-  }
-
-  .dark .text-slate-600 {
-    color: #f4f1ea;
-  }
-
-  .dark .text-slate-500,
-  .dark .text-slate-450,
-  .dark .text-slate-455,
-  .dark .text-slate-460 {
-    color: #e8e4dc;
-  }
-
-  .dark .text-slate-400 {
-    color: #e8e4dc;
-  }
-
-  .dark .text-slate-300 {
-    color: #f4f1ea;
-  }
-
-  .dark .text-slate-200,
-  .dark .text-slate-100 {
-    color: #ffffff;
-  }
-
-  .dark :is(.dark\:text-slate-100, .dark\:text-slate-200, .dark\:text-slate-300) {
-    color: #ffffff;
-  }
-
-  .dark :is(.dark\:text-slate-400, .dark\:text-slate-500) {
-    color: #e8e4dc;
-  }
-
-  .dark .text-sage-dark-light,
-  .dark .text-sage-dark-text,
-  .dark .text-sage-ivory {
-    color: #f4f1ea;
-  }
-
-  .dark .text-sage-dark-mid,
-  .dark .text-sage-dark-text-muted,
-  .dark .text-sage-ivory-muted {
-    color: #e8e4dc;
-  }
-
-  .dark .text-slate-350 {
-    color: #f4f1ea;
-  }
-
-  /* Accent colors — WCAG AA on dark card surfaces (#2e4738 – #4f6d5c) */
-  .dark :is(.text-teal-500, .text-teal-600) {
-    color: #f4f1ea;
-  }
-
-  .dark :is(.text-teal-300, .text-teal-400) {
-    color: #ffffff;
-  }
-
-  .dark :is(.text-emerald-500, .text-emerald-600) {
-    color: #f4f1ea;
-  }
-
-  .dark :is(.text-emerald-300, .text-emerald-400) {
-    color: #ffffff;
-  }
-
-  .dark :is(.text-amber-500, .text-amber-600) {
-    color: #ffe8b0;
-  }
-
-  .dark :is(.text-rose-500, .text-rose-600, .text-rose-700) {
-    color: #ffd4cc;
-  }
-
-  .dark :is(.text-indigo-400, .text-indigo-500, .text-indigo-600, .text-indigo-700) {
-    color: #f4f1ea;
-  }
-
-  .dark .glass-panel,
-  .dark .glass-panel-heavy,
-  .dark .surface-card,
-  .dark .app-content {
-    color: #f4f1ea;
-  }
-
-  .dark .app-content :is(h1, h2, h3, h4, h5, h6) {
-    color: #ffffff;
-  }
-
-  /* Clinical status badges & alert pills on dark cards */
-  .dark :is(.sage-badge, .clinical-status) {
-    color: #f4f1ea;
-  }
-
-  .dark .clinical-status {
-    background-color: rgb(46 71 56 / 0.85);
-  }
-
-  .dark p,
-  .dark label,
-  .dark td,
-  .dark th,
-  .dark li,
-  .dark span:not([class*="text-"]) {
-    color: inherit;
-  }
-
-  .dark button:not([class*="text-white"]) {
-    color: inherit;
-  }
 }
 
 /* Custom scrollbar — earthy tones */
@@ -266,14 +142,6 @@
 
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(184, 203, 184, 0.55);
-}
-
-.dark ::-webkit-scrollbar-thumb {
-  background: rgba(111, 141, 119, 0.5);
-}
-
-.dark ::-webkit-scrollbar-thumb:hover {
-  background: rgba(184, 203, 184, 0.65);
 }
 
 /* Custom animations */
@@ -297,25 +165,13 @@
   @apply bg-slate-50 border border-slate-300/70 shadow-sm transition-all duration-200;
 }
 
-.dark .glass-panel {
-  @apply bg-slate-900 border-sage-dark-mid/50 shadow-none;
-}
-
 .glass-panel-heavy {
   @apply bg-slate-100 border border-slate-300/80 shadow-md transition-all duration-200;
-}
-
-.dark .glass-panel-heavy {
-  @apply bg-slate-850 border-sage-dark-mid/60 shadow-none;
 }
 
 /* Solid surface for content cards (replaces translucent overlays) */
 .surface-card {
   @apply bg-white border border-slate-250/70 shadow-sm transition-all duration-150;
-}
-
-.dark .surface-card {
-  @apply bg-slate-850 border-sage-dark-mid/40;
 }
 
 /* Code editor glow effect */
@@ -326,10 +182,4 @@
 /* Sage status badge base */
 .sage-badge {
   @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border;
-}
-
-.dark .sage-badge {
-  @apply text-sage-ivory;
-  background-color: rgb(46 71 56 / 0.85);
-  border-color: rgb(111 141 119 / 0.45);
 }

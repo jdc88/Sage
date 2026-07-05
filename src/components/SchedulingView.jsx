@@ -59,58 +59,58 @@ export const SchedulingView = () => {
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
                   <tr className="bg-slate-150 dark:bg-slate-900 border-b border-slate-300/50 dark:border-slate-700/50 text-[10px] uppercase font-bold text-slate-600 tracking-wider">
-                    <th className="p-3.5">Patient Details</th>
-                    <th className="p-3.5">Time & Reason</th>
-                    <th className="p-3.5">Copay</th>
-                    <th className="p-3.5">Coverage Status</th>
-                    <th className="p-3.5 text-right">Actions</th>
+                    <th className="p-4">Patient Details</th>
+                    <th className="p-4">Time & Reason</th>
+                    <th className="p-4">Copay</th>
+                    <th className="p-4">Coverage Status</th>
+                    {(patientQueue.some(p => p.status === 'Pending' || p.status === 'Ineligible')) && (
+                      <th className="p-4 text-right">Actions</th>
+                    )}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200/30 dark:divide-slate-850">
                   {patientQueue.map((patient) => (
-                    <tr key={patient.id} className="hover:bg-slate-150/50 dark:hover:bg-slate-900/30 transition-colors">
-                      <td className="p-3.5">
-                        <div className="font-bold text-slate-700 dark:text-slate-200">
+                    <tr key={patient.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-900/20 transition-colors">
+                      <td className="p-4">
+                        <div className="font-bold text-slate-800 dark:text-slate-100 text-sm">
                           {patient.name}
                         </div>
-                        <div className="text-[10px] text-slate-600 font-mono mt-0.5">
+                        <div className="text-xs text-slate-500 mt-1">
                           ID: {patient.id}
                         </div>
                       </td>
-                      <td className="p-3.5">
+                      <td className="p-4">
                         <div className="font-semibold text-slate-700 dark:text-slate-300">
                           {patient.time}
                         </div>
-                        <div className="text-[10px] text-slate-600 mt-0.5">
+                        <div className="text-xs text-slate-500 mt-1">
                           {patient.reason}
                         </div>
                       </td>
-                      <td className="p-3.5 font-bold font-mono text-slate-700 dark:text-sage-dark-light">
+                      <td className="p-4 font-bold text-slate-700 dark:text-sage-dark-light">
                         {patient.copay}
                       </td>
-                      <td className="p-3.5">
-                        <div className="flex flex-col gap-1">
+                      <td className="p-4">
+                        <div className="flex flex-col gap-1.5">
                           {getStatusBadge(patient.status)}
-                          <span className="text-[9px] text-slate-600 font-mono italic">
+                          <span className="text-[10px] text-slate-500 italic">
                             {patient.verifiedAt}
                           </span>
                         </div>
                       </td>
-                      <td className="p-3.5 text-right">
-                        {patient.status !== 'Eligible' ? (
+                      {(patientQueue.some(p => p.status === 'Pending' || p.status === 'Ineligible')) && (
+                      <td className="p-4 text-right">
+                        {(patient.status === 'Pending' || patient.status === 'Ineligible') && (
                           <button
                             onClick={() => triggerEligibilityCheck(patient.id)}
-                            className="inline-flex items-center gap-1 py-1 px-2.5 rounded-lg bg-teal-500 hover:bg-teal-600 active:bg-teal-700 text-white font-bold text-[10px] transition-colors shadow-sm shadow-teal-500/10"
+                            className="inline-flex items-center gap-1.5 py-2 px-4 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-sm"
                           >
-                            <ShieldCheck className="w-3.5 h-3.5" />
+                            <ShieldCheck className="w-4 h-4" />
                             Verify
                           </button>
-                        ) : (
-                          <span className="text-[10px] text-emerald-600 font-bold font-mono">
-                            Verified
-                          </span>
                         )}
                       </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>

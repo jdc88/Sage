@@ -2,8 +2,12 @@ import React from 'react';
 import { useDashboard } from '../context/DashboardContext';
 import { Activity, ShieldAlert, BadgeDollarSign, CheckSquare, RefreshCw, ChevronRight, Leaf, Sprout } from 'lucide-react';
 
-export const RcmCdsView = () => {
+export const RcmCdsView = ({ clinicalMode = false, patientName }) => {
   const { cdsAlerts, rcmLedger, appealClaim } = useDashboard();
+
+  const scopedLedger = clinicalMode && patientName
+    ? rcmLedger.filter(r => r.patient === patientName)
+    : rcmLedger;
 
   const getAlertSeverityStyles = (severity) => {
     switch (severity) {
@@ -57,9 +61,9 @@ export const RcmCdsView = () => {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-      
-      {/* CDS Stream Monitor */}
+    <div className={`grid grid-cols-1 ${clinicalMode ? '' : 'lg:grid-cols-12'} gap-8`}>
+
+      {!clinicalMode && (
       <div className="lg:col-span-4 flex flex-col gap-4">
         <div className="glass-panel rounded-2xl p-5 flex flex-col h-[560px]">
           <div className="flex items-center justify-between pb-4 border-b border-slate-200/50 dark:border-slate-800/50 shrink-0">
@@ -72,7 +76,6 @@ export const RcmCdsView = () => {
             </div>
           </div>
 
-          {/* Neurology CDS feed scroll list */}
           <div className="flex-grow overflow-y-auto py-4 space-y-3 pr-1">
             {cdsAlerts.length === 0 ? (
               <p className="text-xs text-slate-600 text-center py-8">No active warnings or alerts.</p>
@@ -80,51 +83,27 @@ export const RcmCdsView = () => {
               cdsAlerts.map((alert) => (
                 <div
                   key={alert.id}
-                  className={`p-3.5 rounded-xl border flex flex-col gap-2 transition-all duration-200 hover:-translate-y-0.5 clinical-status ${getAlertSeverityStyles(
-                    alert.severity
-                  )}`}
+                  className={`p-3.5 rounded-xl border flex flex-col gap-2 clinical-status ${getAlertSeverityStyles(alert.severity)}`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold font-mono tracking-wider uppercase">
-                      {alert.type}
-                    </span>
-                    <span className="text-[9px] font-mono text-slate-600">
-                      {alert.time}
-                    </span>
+                    <span className="text-[10px] font-bold font-mono tracking-wider uppercase">{alert.type}</span>
+                    <span className="text-[9px] font-mono text-slate-600">{alert.time}</span>
                   </div>
-
                   <div>
-                    <h4 className="text-xs font-bold text-slate-700 dark:text-slate-200">
-                      {alert.patient}
-                    </h4>
-                    <p className="text-[11px] font-medium leading-relaxed mt-1 text-slate-600 dark:text-slate-300">
-                      {alert.msg}
-                    </p>
-                  </div>
-
-                  <div className="flex items-center justify-between pt-1 border-t border-slate-300/30 dark:border-slate-700/40">
-                    <span className="text-[10px] font-bold font-mono text-slate-700 dark:text-slate-300">
-                      Reading: <span className="underline">{alert.value}</span>
-                    </span>
-                    <button className="text-[9px] uppercase font-bold tracking-wider text-slate-600 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:underline transition-colors">
-                      Dismiss
-                    </button>
+                    <h4 className="text-xs font-bold text-slate-700 dark:text-slate-200">{alert.patient}</h4>
+                    <p className="text-[11px] font-medium leading-relaxed mt-1 text-slate-600 dark:text-slate-300">{alert.msg}</p>
                   </div>
                 </div>
               ))
             )}
           </div>
-          
-          <div className="pt-3 border-t border-slate-300/50 dark:border-slate-700/50 shrink-0 text-center text-[10px] text-slate-600 font-bold uppercase tracking-wider font-mono">
-            Active Monitors: EEG + ICP channels
-          </div>
         </div>
       </div>
+      )}
 
-      {/* RCM Revenue Cycle Ledger */}
-      <div className="lg:col-span-8 flex flex-col gap-4">
-        
-        {/* KPI Financial stats */}
+      <div className={`${clinicalMode ? '' : 'lg:col-span-8'} flex flex-col gap-6`}>
+
+        {!clinicalMode && (
         <div className="grid grid-cols-3 gap-4">
           <div className="glass-panel rounded-2xl p-4 flex flex-col justify-between">
             <div className="flex items-center justify-between">
@@ -153,9 +132,9 @@ export const RcmCdsView = () => {
             <p className="text-[9px] text-slate-600 mt-1">Average reimbursement turnaround</p>
           </div>
         </div>
+        )}
 
-        {/* Ledger grid */}
-        <div className="glass-panel rounded-2xl p-5 flex flex-col h-[400px]">
+        <div className={`surface-card rounded-2xl p-6 flex flex-col ${clinicalMode ? '' : 'h-[400px]'}`}>
           <div className="flex items-center justify-between pb-4 border-b border-slate-200/50 dark:border-slate-800/50 shrink-0">
             <div>
               <h3 className="font-bold text-slate-700 dark:text-slate-100 text-sm">RCM Claims Ledger</h3>
@@ -177,7 +156,14 @@ export const RcmCdsView = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200/30 dark:divide-slate-850">
-                  {rcmLedger.map((claim) => (
+                  {scopedLedger.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="p-8 text-center text-sm text-slate-500 dark:text-slate-400">
+                        No billing records for this patient.
+                      </td>
+                    </tr>
+                  ) : (
+                  scopedLedger.map((claim) => (
                     <tr key={claim.id} className="hover:bg-slate-150/50 dark:hover:bg-slate-900/30 transition-colors">
                       <td className="p-3">
                         <div className="font-bold text-slate-850 dark:text-sage-dark-light">{claim.patient}</div>
@@ -215,7 +201,8 @@ export const RcmCdsView = () => {
                         )}
                       </td>
                     </tr>
-                  ))}
+                  ))
+                  )}
                 </tbody>
               </table>
             </div>
