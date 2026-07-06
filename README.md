@@ -59,18 +59,66 @@ Traditional agent dashboards expose raw telemetry (JSON state, message buses, gl
 
 ### High-level layout
 
+Sage uses a **full-height master-detail shell** (`h-screen`, fixed queue + scrollable workspace). Physicians stay in **Clinical mode** by default; **Tech Console** is one click away and does not share the queue column.
+
+#### Clinical mode (default)
+
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│  Sage Clinical Agent · Dr. Evelyn Young          [⚙ Tech Console]│
-├──────────────┬──────────────────────────────────────────────────┤
-│ Today's Queue│  Active encounter: Arthur Pendelton               │
-│  (w-80)      │  [Intake] [Scribe] [Prior Auth] [Billing]          │
-│              │  SOAP note · monitor · workflow content            │
-│  Arthur ●    │                                                  │
-│  Sarah       │                                                  │
-│  Michael ⚠   │                                                  │
-└──────────────┴──────────────────────────────────────────────────┘
+╔══════════════════════════════════════════════════════════════════════════╗
+║  🌿 Sage Clinical Agent        Neurology · Dr. Evelyn Young      [⚙]     ║
+╠════════════════════╦═════════════════════════════════════════════════════╣
+║  TODAY'S QUEUE     ║  ACTIVE ENCOUNTER                                   ║
+║  (320px sidebar)   ║  ─────────────────────────────────────────────────  ║
+║                    ║  Arthur Pendelton · Chronic Migraine F/U · 09:00    ║
+║  ┌────────────────┐║  ┌────────┐ ┌────────┐ ┌────────────┐ ┌────────┐    ║
+║  │● Arthur        │║  │ Intake  │ │ Scribe │ │ Prior Auth │ │Billing │   ║
+║  │  ✓ Eligible    │║  └────────┘ └────────┘ └────────────┘ └────────┘    ║
+║  └────────────────┘║                                                     ║
+║  ┌────────────────┐║  ┌─────────────────────────────────────────────┐    ║
+║  │  Sarah         │║  │         Clinical SOAP Note (center focus)    │   ║
+║  │  ✓ Eligible    │║  │   S · O · A · P  —  AI draft, physician edit │   ║
+║  └────────────────┘║  └─────────────────────────────────────────────┘    ║
+║  ┌────────────────┐║  ▸ Ambient transcript (collapsed by default)        ║
+║  │  Michael       │║  ▸ Patient monitor — ICP / Alpha (this pt only)     ║
+║  │  ⏳ Pending     │║                                                    ║
+║  │  [Verify]      │║  [ Clinical Alerts ]  ← badge only if pt has alerts ║
+║  └────────────────┘║                                                     ║
+║  ┌────────────────┐║                                                     ║
+║  │  Diana …       │║                                                     ║
+║  │  Robert …      │║                                                     ║
+║  └────────────────┘║                                                     ║
+╚════════════════════╩═════════════════════════════════════════════════════╝
+         ▲                              ▲
+         │                              │
+   activePatientId              EncounterWorkflow step
+   (click to switch)           drives center panel content
 ```
+
+| Zone | Component | Behavior |
+|------|-----------|----------|
+| **Header** | `Layout.jsx` | Branding, physician context, **gear** opens Tech Console |
+| **Left** | `PatientQueueSidebar.jsx` | Full day list; selection highlight; **Verify** only for Pending/Ineligible |
+| **Right** | `ClinicalWorkspace.jsx` | Per-patient Intake / Scribe / Prior Auth / Billing; SOAP is the visual anchor |
+
+#### Tech Console mode (gear icon → “Back to clinic”)
+
+```
+╔══════════════════════════════════════════════════════════════════════════╗
+║  ← Back to clinic                              Tech Console (ADK debug)  ║
+╠══════════════════════════════════════════════════════════════════════════╣
+║  ┌─────────────┬─────────────┬─────────────┬─────────────┐               ║
+║  │ Multi-Agent │ MCP Inspect │  Security   │ Agents CLI  │               ║
+║  └─────────────┴─────────────┴─────────────┴─────────────┘               ║
+║                                                                          ║
+║   Orchestrator graph · message bus · MCP tool traces                     ║
+║   RBAC · PHI log · vault · audit trail · /agents list · skills           ║
+║                                                                          ║
+║   (No patient queue — isolated from clinical UX)                         ║
+╚══════════════════════════════════════════════════════════════════════════╝
+```
+
+**Routing:** `App.jsx` renders `ClinicalWorkspace` or `AgentStudioView` based on `activeTab` in `DashboardContext` — the clinical layout is never modified when debugging agents.
+
 
 ### Application diagram
 
