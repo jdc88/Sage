@@ -1,47 +1,80 @@
 # Sage Clinical Agent 🌿
 
-A neurology-focused clinical automation dashboard that simulates an autonomous healthcare agent for ambient scribing, prior authorization, patient intake, clinical decision support (CDS), and revenue cycle management (RCM) — backed by a demonstrated multi-agent system, MCP server inspector, security controls, and an Agents CLI (the **Agent Studio / ADK** console).
+An interactive **demo prototype** of an autonomous neurology clinical agent for **Dr. Evelyn Young**. Sage simulates ambient scribing, patient intake, prior authorization, clinical decision support (CDS), and revenue cycle management (RCM) — with a separate **Tech Console** that demonstrates multi-agent orchestration (ADK), MCP servers, security controls, and an Agents CLI.
 
-Built as a single-page React application with live mock data streams, designed for high readability in both light and dark modes.
+> **Important:** This is not a production clinical system. Workflows run on **mock data and browser-side simulators** in `DashboardContext.jsx`. There is no live EHR, payer portal, or Gemini API connection required to run the demo. An optional `backend/` scaffold shows how the same patterns would run on Agent Runtime in production.
+
+Built with React 19, Vite, and Tailwind CSS v4 — light sage theme, master-detail clinical layout, progressive disclosure of technical agent plumbing.
 
 ---
 
-## Problem (Neurology Example for Demo)
+## Problem
 
-Outpatient neurology clinics face overlapping operational burdens that compete for physician attention:
+Outpatient neurology clinics face overlapping burdens that compete for physician attention during patient visits:
 
 | Challenge | Impact |
 |-----------|--------|
-| **Documentation load** | Physicians spend significant time on SOAP notes instead of patient care |
+| **Documentation load** | Physicians spend significant time on SOAP notes instead of direct patient care |
 | **Prior authorization friction** | Neuroimaging (MRI/MRA), EEG, EMG/NCS, and specialty therapies require insurer portal navigation and clinical justification |
-| **Intake & eligibility** | Front-desk staff manually verify coverage, copays, and appointment readiness |
-| **CDS monitoring** | EEG, ICP, and seizure-risk signals need real-time visibility during encounters |
+| **Intake & eligibility** | Staff manually verify coverage, copays, and appointment readiness |
+| **CDS monitoring** | EEG, ICP, and seizure-risk signals need context during encounters — not as global dashboard noise |
 | **RCM leakage** | Denied claims and missing documentation delay reimbursement |
 
-Legacy dashboards often use low-contrast dark themes, cardiology-centric telemetry (ECG/heart rate), and fragmented UIs that obscure clinical status text.
+Traditional agent dashboards expose raw telemetry (JSON state, message buses, global alert walls) that increase cognitive load for practicing clinicians. Sage addresses this by separating the **physician workspace** from **engineering/debug surfaces**.
 
 ---
 
 ## Solution
 
-**Sage Clinical Agent** unifies the clinical workflow into one readable dashboard for **Dr. Evelyn Young, Neurology Specialist**. The sidebar follows the real patient journey, step by step:
+**Sage Clinical Agent** uses a **master-detail split layout**:
 
-- **Overview** — KPIs, patient-journey launchers, and live agent activity stream
+| Area | Purpose |
+|------|---------|
+| **Left — Today's Queue** | Persistent day schedule; select any patient; **Verify** only for Pending/Ineligible |
+| **Center — Clinical Workspace** | Encounter workflow for the **active patient only**: Intake → Scribe → Prior Auth → Billing |
+| **Header — Tech Console** (gear icon) | ADK multi-agent graph, MCP inspector, security posture, Agents CLI — hidden during routine care |
 
-**Patient Journey**
-1. **Intake & Scheduling** — Patient queue with eligibility badges and intake analytics
-2. **Ambient Scribe** — Simulated live transcript + editable SOAP note compiler
-3. **Prior Auth Portal** — Claims pipeline with automation terminal (`SAGE_CLI_ENGINE`)
-4. **CDS Monitor & RCM** — Neurology CDS alerts (ICP, EEG) and billing ledger
+### Clinical workflow (center panel)
 
-**System**
-- **Agent Studio (ADK)** — Multi-agent topology, MCP server inspector, security posture (RBAC/PHI guard/vault/audit), and an interactive Agents CLI
+1. **Intake** — Eligibility and copay status for the selected patient
+2. **Scribe** — Ambient transcript (collapsed by default) + AI-synthesized SOAP note as the visual focus; patient-scoped ICP/Alpha monitor
+3. **Prior Auth** — Claims pipeline filtered to the active patient
+4. **Billing** — RCM ledger filtered to the active patient
 
-The UI uses a **Sage & Earthy Neutral** design system with WCAG AA contrast, organic leaf/sprout status iconography, and an EEG brainwave ticker (replacing cardiology ECG).
+### Tech Console (gear icon → “Back to clinic” to return)
+
+- **Multi-Agent** — Orchestrator + Scribe, Portal, and RCM agents; message bus and task queues
+- **MCP Inspector** — EHR, Payer, Billing, and Imaging MCP servers with tool-call traces
+- **Security** — RBAC scope, PHI redaction log, credential vault, audit trail
+- **Agents CLI** — Named skills (`/agents list`, `/skill run intake.verify PT-03`, etc.)
+
+### Design principles
+
+- Sage & earthy neutral palette (`#f7faf8` linen background, `#647b6a` accents)
+- WCAG-friendly contrast; leaf/sprout status iconography
+- Neurology CDS (EEG/ICP) scoped to the **active patient**, not pinned globally
+- Clinical alerts collapsed into a **patient-scoped badge + drawer**
 
 ---
 
 ## Architecture
+
+### High-level layout
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Sage Clinical Agent · Dr. Evelyn Young          [⚙ Tech Console]│
+├──────────────┬──────────────────────────────────────────────────┤
+│ Today's Queue│  Active encounter: Arthur Pendelton               │
+│  (w-80)      │  [Intake] [Scribe] [Prior Auth] [Billing]          │
+│              │  SOAP note · monitor · workflow content            │
+│  Arthur ●    │                                                  │
+│  Sarah       │                                                  │
+│  Michael ⚠   │                                                  │
+└──────────────┴──────────────────────────────────────────────────┘
+```
+
+### Application diagram
 
 ```mermaid
 flowchart TB
@@ -50,68 +83,93 @@ flowchart TB
     MAIN[main.jsx]
   end
 
-  subgraph state [Global State]
-    CTX[DashboardContext.jsx]
-    CTX --> Theme[Theme light/dark]
-    CTX --> Nav[activeTab navigation]
-    CTX --> Scribe[Scribe + SOAP state]
-    CTX --> Claims[Prior auth claims]
-    CTX --> Queue[Patient intake queue]
-    CTX --> CDS[CDS alerts + EEG stream]
-    CTX --> RCM[RCM ledger]
-    CTX --> Logs[Agent log stream]
-    CTX --> Agents[Agent / MCP / Security registries]
-    CTX --> CLI[runAgentCommand skill runner]
+  subgraph state [Global State — DashboardContext.jsx]
+    CTX[Mock data + simulators]
+    CTX --> Queue[patientQueue + activePatientId]
+    CTX --> Encounters[Per-patient SOAP / transcript / step]
+    CTX --> Agents[AGENT_REGISTRY + MCP_SERVERS]
+    CTX --> Sec[SECURITY_CONTROLS + PHI log]
+    CTX --> CLI[runAgentCommand + AGENT_SKILLS]
   end
 
-  subgraph shell [Application Shell]
+  subgraph shell [Shell — Layout.jsx]
     APP[App.jsx]
-    LAYOUT[Layout.jsx]
+    LAYOUT[Header + master-detail flex]
     APP --> LAYOUT
-    LAYOUT --> Header[Header + EEG ticker]
-    LAYOUT --> Sidebar[Journey sidebar]
-    LAYOUT --> Footer[System activity ticker]
+    LAYOUT --> QSidebar[PatientQueueSidebar]
+    LAYOUT --> Main[ClinicalWorkspace OR AgentStudioView]
   end
 
-  subgraph views [Feature Views - Patient Journey]
-    OV[Overview.jsx]
-    SCH[SchedulingView.jsx - Step 1]
-    SV[ScribeView.jsx - Step 2]
-    PA[PriorAuthView.jsx - Step 3]
-    RCMV[RcmCdsView.jsx - Step 4]
+  subgraph clinical [Clinical Workspace]
+    CW[ClinicalWorkspace.jsx]
+    CW --> EW[EncounterWorkflow]
+    CW --> PM[PatientMonitorPanel]
+    CW --> SOAP[SOAP editor + ambient transcript]
+    CW --> PA[PriorAuthView clinicalMode]
+    CW --> RCM[RcmCdsView clinicalMode]
+    CW --> AL[ClinicalAlertsDrawer]
   end
 
-  subgraph studio [Agent Studio - ADK]
-    AS[AgentStudioView.jsx]
-    AS --> MA[MultiAgentView.jsx]
-    AS --> MCP[McpInspectorView.jsx]
-    AS --> SEC[SecurityView.jsx]
-    AS --> CLIV[AgentsCliView.jsx]
+  subgraph studio [Tech Console — AgentStudioView]
+    AS[Multi-Agent / MCP / Security / CLI tabs]
   end
-
-  OV --> ACP[AgentConceptsPanel.jsx]
 
   HTML --> MAIN
   MAIN --> CTX
   MAIN --> APP
-  APP -->|activeTab switch| OV & SCH & SV & PA & RCMV & AS
-  CTX -.->|useDashboard| LAYOUT & views & studio & ACP
+  APP -->|activeTab clinical| CW
+  APP -->|activeTab agent-studio| AS
+  CTX -.->|useDashboard| shell & clinical & studio
 ```
 
-### Data flow (simulated streams)
+### Agent orchestration (conceptual)
+
+```mermaid
+flowchart LR
+  subgraph clinic [Clinical UI]
+    Q[Queue]
+    S[Scribe / SOAP]
+  end
+
+  subgraph agents [ADK Multi-Agent — simulated]
+    O[Orchestrator]
+    SC[Scribe Agent]
+    PO[Portal Agent]
+    RC[RCM Agent]
+  end
+
+  subgraph mcp [MCP Servers — simulated]
+    EHR[EHR MCP]
+    PAY[Payer MCP]
+    BIL[Billing MCP]
+    IMG[Imaging MCP]
+  end
+
+  Q --> O
+  S --> SC
+  O --> SC & PO & RC
+  SC & PO & RC --> EHR & PAY & BIL & IMG
+```
+
+### Data flow (simulated — no live API)
 
 ```mermaid
 sequenceDiagram
-  participant User
+  participant Physician
+  participant ClinicalWorkspace
   participant DashboardContext
-  participant Layout
-  participant Views
+  participant Simulators
 
-  User->>DashboardContext: Toggle theme / Start scribe / Trigger eligibility
-  DashboardContext->>DashboardContext: Interval simulators (EEG, agent logs, CDS alerts)
-  DashboardContext->>Layout: eegData, agentLogs, theme
-  DashboardContext->>Views: claims, transcript, soapNote, cdsAlerts, rcmLedger
-  Views->>User: Render cards, badges, terminal output
+  Physician->>ClinicalWorkspace: Select patient in queue
+  ClinicalWorkspace->>DashboardContext: setActivePatient(id)
+  DashboardContext->>ClinicalWorkspace: Per-patient SOAP, step, alerts
+
+  Physician->>ClinicalWorkspace: Start ambient scribe
+  ClinicalWorkspace->>DashboardContext: resetScribeSession()
+  DashboardContext->>Simulators: Transcript interval, agent logs
+  Simulators->>ClinicalWorkspace: Updated transcript + SOAP
+
+  Note over DashboardContext,Simulators: MCP calls, message bus, CDS alerts<br/>run in background simulators — visible in Tech Console
 ```
 
 ### Tech stack
@@ -120,76 +178,68 @@ sequenceDiagram
 |-------|------------|
 | UI | React 19 |
 | Build | Vite 8 |
-| Styling | Tailwind CSS v4 (`@theme` tokens in `src/index.css`) |
+| Styling | Tailwind CSS v4 (`@theme` in `src/index.css`) |
 | Icons | Lucide React |
 | State | React Context (`DashboardContext.jsx`) |
 | Lint | Oxlint |
+| Optional API | FastAPI (`backend/`) — ADK stub, PHI/injection guards |
 
 ### Project structure
 
 ```
 agy-clinical-dashboard/
 ├── public/
-│   └── favicon.svg          # Sage leaf icon
+│   └── favicon.svg
 ├── src/
-│   ├── main.jsx             # App bootstrap + DashboardProvider
-│   ├── App.jsx              # Tab router + app-content wrapper
-│   ├── index.css            # Design tokens, dark-mode contrast, panel utilities
+│   ├── main.jsx
+│   ├── App.jsx                         # clinical vs agent-studio router
+│   ├── index.css                       # Sage design tokens
 │   ├── context/
-│   │   └── DashboardContext.jsx   # Mock data + live simulators + agent/MCP/security registries
+│   │   └── DashboardContext.jsx        # Mock data, simulators, agent registries
+│   ├── api/
+│   │   └── agentApi.js                 # Optional backend client (Tech Console only)
 │   └── components/
-│       ├── Layout.jsx              # Shell, header EEG ticker, journey sidebar, footer
-│       ├── ThemeToggle.jsx         # Light/dark theme switch
-│       ├── Overview.jsx            # KPIs, patient-journey launchers, agent summary
-│       ├── AgentConceptsPanel.jsx  # Agent/MCP/security summary strip (used in Overview)
-│       ├── ScribeView.jsx          # [Step 2] Ambient transcript + SOAP editor
-│       ├── PriorAuthView.jsx       # [Step 3] Prior-auth pipeline + Agents CLI terminal
-│       ├── SchedulingView.jsx      # [Step 1] Intake queue + scheduling analytics
-│       ├── RcmCdsView.jsx          # [Step 4] CDS alerts + RCM billing ledger
-│       └── AgentStudioView.jsx     # ADK console shell (sub-tab router)
-│           ├── MultiAgentView.jsx   # Multi-agent orchestration topology
-│           ├── McpInspectorView.jsx # MCP server health + tool-call traces
-│           ├── SecurityView.jsx     # RBAC, PHI guard, vault, audit trail
-│           └── AgentsCliView.jsx    # Interactive skill-runner terminal
-├── implementation_plan_v3.md
-├── implementation_plan_neurology.md
-├── backend/                     # Google ADK + security API (FastAPI, Cloud Run)
+│       ├── Layout.jsx                  # Master-detail shell
+│       ├── PatientQueueSidebar.jsx     # Today's Queue (left column)
+│       ├── ClinicalWorkspace.jsx       # Active encounter (center)
+│       ├── EncounterWorkflow.jsx       # Intake → Scribe → Prior Auth → Billing
+│       ├── PatientMonitorPanel.jsx     # Patient-scoped ICP / EEG
+│       ├── ClinicalAlertsDrawer.jsx    # Patient-scoped alerts badge
+│       ├── PriorAuthView.jsx           # Prior auth (clinical + full modes)
+│       ├── RcmCdsView.jsx              # Billing ledger (clinical + full modes)
+│       └── AgentStudioView.jsx         # Tech Console shell
+│           ├── MultiAgentView.jsx
+│           ├── McpInspectorView.jsx
+│           ├── SecurityView.jsx
+│           └── AgentsCliView.jsx
+├── scripts/                            # Optional runtime validation (see docs/)
+├── docs/
+│   └── AGENT_RUNTIME_TESTING.md
+├── backend/                            # Optional FastAPI + ADK scaffold
 │   ├── main.py
-│   ├── agents/orchestrator/     # ADK agent stub + policy-gated tools
-│   ├── security/                # PHI guard, injection guard, audit
-│   └── README.md                # Setup, deploy, API docs
+│   ├── agents/orchestrator/
+│   ├── security/
+│   └── README.md
+├── implementation_plan_neurology.md
 └── tasks.md
 ```
 
-> Note: `MultiAgentView`, `McpInspectorView`, `SecurityView`, and `AgentsCliView` are siblings of `AgentStudioView.jsx` in `src/components/`; they are nested above only to show that `AgentStudioView` composes them as sub-tabs.
-
 ---
 
-## Design system
+## Course concepts demonstrated
 
-### Light mode (default)
+This project applies **Google Agent course** key concepts as follows:
 
-Sage green palette anchored on:
+| Key Concept | Where | How in Sage |
+|-------------|-------|-------------|
+| **Agent / Multi-agent (ADK)** | Code | `AGENT_REGISTRY`, `MultiAgentView.jsx`, `backend/agents/orchestrator/` |
+| **MCP Server** | Code | `MCP_SERVERS`, `McpInspectorView.jsx`, simulated tool-call trace |
+| **Security features** | Code | `SecurityView.jsx`, PHI/injection guards in `backend/security/` |
+| **Agent skills (Agents CLI)** | Code | `AgentsCliView.jsx`, `AGENT_SKILLS`, `runAgentCommand()` |
+| **Antigravity** | Video | Ambient scribe + background Portal/RCM automation without physician prompting |
+| **Deployability** | Video | `npm run build` → Vercel; optional `backend/Dockerfile` → Cloud Run |
 
-- `#647b6a`, `#869b8b`, `#a9baab`, `#9cb5ad`, `#91a596`
-- Soft linen backgrounds (`#f7faf8`)
-
-### Dark mode
-
-Dark green surfaces bounded by:
-
-- `#2e4738` (deepest background)
-- `#6f8d77` (borders / accents)
-- `#b8cbb8` (legacy accent)
-
-Text on dark cards uses **crisp ivory** (`#F4F1EA`) and **white** headings for WCAG AA+ contrast.
-
-### Status iconography
-
-| Status | Icon |
-|--------|------|
-| Approved / Eligible / Paid | Green leaf |
-| In Review / Pending / Submitted | Moss sprout |
+**Code review path:** `npm run dev` → Clinical Workspace for the physician demo → **gear icon** (top-right) for Tech Console.
 
 ---
 
@@ -200,21 +250,19 @@ Text on dark cards uses **crisp ivory** (`#F4F1EA`) and **white** headings for W
 - **Node.js** 18+ (20+ recommended)
 - **npm** 9+
 
-### Install and run
+No API keys are required for the frontend demo.
+
+### Install and run (frontend — primary)
 
 ```bash
-# Clone the repository
 git clone <your-repo-url>
 cd agy-clinical-dashboard
 
-# Install dependencies
 npm install
-
-# Start development server
 npm run dev
 ```
 
-Open the URL printed in the terminal (typically `http://localhost:5173`).
+Open **http://localhost:5173** (or the URL printed in the terminal).
 
 ### Other commands
 
@@ -224,56 +272,95 @@ npm run preview  # Preview production build locally
 npm run lint     # Run Oxlint
 ```
 
-### Usage notes
+### Optional backend scaffold
 
-- **Theme toggle**: Moon icon = dark mode active; Sun icon = light mode active
-- **Navigation**: The sidebar is ordered as a numbered patient journey (1 → 4), with the **Agent Studio** technical console grouped separately under *System*
-- **Ambient Scribe**: Click *Start Ambient Session* on the Scribe view to stream mock dialogue into the SOAP editor
-- **Prior Auth terminal**: Background `[Portal Agent]` logs auto-scroll in the right-hand panel
-- **Intake**: Click *Verify* on pending patients to simulate eligibility checks
-- **Agent Studio**: Explore the multi-agent topology, MCP inspector, security controls, and run skills from the Agents CLI
-- **Backend API (optional)**: See [`backend/README.md`](backend/README.md) for Google ADK + PHI/injection guards on Cloud Run. Set `VITE_AGENT_API_URL=http://localhost:8080` in `.env.local` to connect the Agents CLI to the backend.
+The backend is **not required** for the clinical demo. To explore server-side PHI guards, injection detection, and CLI mirroring:
+
+```bash
+cd backend
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn main:app --reload --port 8080
+```
+
+To connect **only the Tech Console Agents CLI** to the local API, copy `.env.example` to `.env.local` in the project root:
+
+```env
+VITE_AGENT_API_URL=http://localhost:8080
+```
+
+Restart `npm run dev`. The clinical workspace is unchanged; only the CLI in Tech Console calls the backend.
+
+See [`backend/README.md`](backend/README.md) and [`docs/AGENT_RUNTIME_TESTING.md`](docs/AGENT_RUNTIME_TESTING.md) for API details and validation scripts.
+
+### Deploy (frontend)
+
+```bash
+npm run build
+```
+
+Deploy the `dist/` folder to **Vercel** (or any static host). Typical workflow: connect the GitHub repo and auto-deploy on push to `main`.
 
 ---
 
-## Clinical persona (neurology)
+## Usage guide
+
+### Clinical Workspace (default view)
+
+1. **Select a patient** in **Today's Queue** (left sidebar) — defaults to Arthur Pendelton.
+2. Use the **workflow stepper**: Intake → Scribe → Prior Auth → Billing.
+3. On **Scribe**: review the AI SOAP draft; expand **Ambient transcript** to start a simulated scribe session.
+4. **Verify eligibility** appears only for patients with Pending or Ineligible status.
+5. **Clinical Alerts** badge appears only when the **active patient** has high-priority alerts.
+
+### Tech Console (engineering / course demo)
+
+1. Click the **gear icon** (top-right).
+2. Explore **Multi-Agent**, **MCP Inspector**, **Security**, and **Agents CLI** tabs.
+3. Try CLI commands: `/agents list`, `/mcp ping`, `/security audit`, `/skill run intake.verify PT-03`.
+4. Click **Back to clinic** to return to the physician view.
+
+---
+
+## Clinical persona
 
 | Element | Value |
 |---------|-------|
-| Application name | Sage Clinical Agent |
-| Logged-in physician | Dr. Evelyn Young, Neurology Specialist |
-| CDS stream | EEG brainwave simulation |
-| Live metrics | `ICP: 11 mmHg · Alpha: Stable` |
+| Application | Sage Clinical Agent |
+| Physician | Dr. Evelyn Young, Neurology Specialist |
+| Default patient | Arthur Pendelton — chronic migraine follow-up |
+| CDS (patient-scoped) | ICP ~11 mmHg, alpha rhythms stable, EEG stream nominal |
 | Sample CPT codes | 70551 (Brain MRI), 95816 (EEG), 95886 (EMG/NCS), 64615 (Botox migraine), 99214 (office visit) |
+
+---
+
+## Limitations
+
+- **Prototype only** — simulated transcripts, claims, MCP latency, and agent logs
+- **No real PHI** — mock patient names; redaction demos use sample tokens
+- **No production API** — optional `backend/` illustrates patterns; not wired to Epic, UHC, or live Gemini unless you deploy and configure ADK yourself
+- **Per-patient state** is in-memory; refresh resets the session
+
+### Possible extensions
+
+- Live WebSocket backend for vitals and claim status
+- FHIR patient layer
+- Production ADK deployment on Vertex AI Agent Runtime
+- CI accessibility and runtime validation (`scripts/validate_agent_runtime.sh`)
 
 ---
 
 ## Implementation documentation
 
-Detailed change logs for major refactors:
-
-- [`implementation_plan_v3.md`](implementation_plan_v3.md) — Sage color overhaul & rebranding
 - [`implementation_plan_neurology.md`](implementation_plan_neurology.md) — Cardiology → neurology transition
+- [`docs/AGENT_RUNTIME_TESTING.md`](docs/AGENT_RUNTIME_TESTING.md) — Runtime validation payloads (optional backend)
 - [`tasks.md`](tasks.md) — Project task ledger
-
----
-
-## Limitations & future work
-
-This is a **frontend prototype** with simulated data. There is no backend API, EHR integration, or real PHI handling.
-
-Potential extensions:
-
-- REST/WebSocket backend for live vitals and claim status
-- Role-based access and audit logging
-- FHIR-compatible patient data layer
-- Automated accessibility testing in CI
 
 ---
 
 ## License
 
-Private / submission use. Update this section if you publish under an open-source license.
+Private / course submission use. Update this section if you publish under an open-source license.
 
 ---
 
