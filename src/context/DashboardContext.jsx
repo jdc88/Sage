@@ -99,6 +99,27 @@ const buildPatientEncounters = () => ({
   },
 });
 
+const PATIENT_MONITOR_PROFILES = {
+  'PT-01': { icp: '11 mmHg', alpha: 'Stable' },
+  'PT-02': { icp: '10 mmHg', alpha: 'Stable' },
+  'PT-03': { icp: '—', alpha: 'Baseline pending' },
+  'PT-04': { icp: '9 mmHg', alpha: 'Stable' },
+  'PT-05': { icp: '12 mmHg', alpha: 'Review' },
+};
+
+const seedEegBuffer = (patientId) => {
+  const n = parseInt(patientId.replace(/\D/g, ''), 10) || 1;
+  return Array.from({ length: 40 }, (_, i) =>
+    50
+    + Math.sin((i + n) * 0.4) * 12
+    + Math.sin((i + n * 0.7) * 0.85) * 6
+    + Math.sin((i + n) * 1.6) * 4
+  );
+};
+
+const buildInitialEegByPatient = () =>
+  Object.fromEntries(INITIAL_QUEUE.map(p => [p.id, seedEegBuffer(p.id)]));
+
 const INITIAL_CDS_ALERTS = [
   { id: 'CDS-1', patient: 'Arthur Pendelton', type: 'ICP Trend', value: '11 mmHg', severity: 'warning', msg: 'ICP approaching upper normal limit; correlate with headache diary and neuro imaging', time: '09:03 AM' },
   { id: 'CDS-2', patient: 'Robert Bruce', type: 'EEG Spike Activity', value: 'Focal temporal', severity: 'info', msg: 'Intermittent focal temporal sharp waves on ambulatory EEG stream', time: '09:12 AM' }
@@ -328,10 +349,8 @@ export const DashboardProvider = ({ children }) => {
     { id: 'RCM-105', patient: 'Michael Chang', code: '95886', fee: '$420', status: 'Submitted', action: 'Monitor Status', reason: 'EMG/NCS upper extremity neuropathy workup' }
   ]);
 
-  // EEG ticker state (simulating ambulatory brainwave stream)
-  const [eegData, setEegData] = useState(
-    Array.from({ length: 40 }, (_, i) => 50 + Math.sin(i * 0.4) * 12 + Math.sin(i * 0.85) * 6 + Math.sin(i * 1.6) * 4)
-  );
+  // Per-patient ambulatory EEG stream buffers (pre-seeded for instant display on patient switch)
+  const [eegByPatient, setEegByPatient] = useState(buildInitialEegByPatient);
 
   const [securityEvents, setSecurityEvents] = useState([
     { id: 1, title: 'Vault sync', severity: 'info', detail: 'Credential vault last synced 4 minutes ago.' },
@@ -462,12 +481,15 @@ export const DashboardProvider = ({ children }) => {
     }));
   };
 
-  // EEG live animation simulator (neurology CDS stream ticker)
+  // EEG live animation — updates only the active patient's buffer
   useEffect(() => {
+    const phase = parseInt(activePatientId.replace(/\D/g, ''), 10) || 1;
     const interval = setInterval(() => {
-      setEegData(prev => {
-        const nextData = [...prev.slice(1)];
-        const tick = Date.now() / 280;
+      setEegByPatient(prev => {
+        const current = prev[activePatientId];
+        if (!current) return prev;
+        const nextData = [...current.slice(1)];
+        const tick = Date.now() / 280 + phase;
         let val = 50
           + Math.sin(tick * 1.1) * 14
           + Math.sin(tick * 2.0) * 7
@@ -475,11 +497,11 @@ export const DashboardProvider = ({ children }) => {
           + (Math.random() - 0.5) * 3;
         val = Math.max(8, Math.min(92, val));
         nextData.push(val);
-        return nextData;
+        return { ...prev, [activePatientId]: nextData };
       });
     }, 200);
     return () => clearInterval(interval);
-  }, []);
+  }, [activePatientId]);
 
   // MCP latency history updater (continuous sparklines)
   useEffect(() => {
@@ -917,6 +939,9 @@ export const DashboardProvider = ({ children }) => {
     ]);
   };
 
+  const eegData = eegByPatient[activePatientId] || eegByPatient['PT-01'];
+  const patientMonitor = PATIENT_MONITOR_PROFILES[activePatientId] || PATIENT_MONITOR_PROFILES['PT-01'];
+
   return (
     <DashboardContext.Provider value={{
       activeTab,
@@ -956,6 +981,7 @@ export const DashboardProvider = ({ children }) => {
       rcmLedger,
       appealClaim,
       eegData,
+      patientMonitor,
       // New Agent Studio state
       agentMessages,
       mcpCallLog,

@@ -137,8 +137,6 @@ export const ClinicalWorkspace = () => {
       default:
         return (
           <div className="space-y-8">
-            <PatientMonitorPanel />
-
             <article className="surface-card rounded-2xl p-8 md:p-10 space-y-8 shadow-sm">
               <header className="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
                 <div>
@@ -274,6 +272,8 @@ export const ClinicalWorkspace = () => {
       </header>
 
       <EncounterWorkflow />
+
+      <PatientMonitorPanel />
 
       {renderStep()}
     </div>
