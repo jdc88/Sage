@@ -411,3 +411,15 @@ Private / course submission use. Update this section if you publish under an ope
 ---
 
 © 2026 Josephine Choi. All rights reserved.
+
+Physician UI (Clinical Workspace)
+        │
+        ▼
+   Orchestrator Agent
+   ┌────┼────┐
+   ▼    ▼    ▼
+Scribe Portal RCM
+   └────┼────┘
+        ▼
+   MCP Tool Layer
+(EHR · Payer · Billing · Imaging)
