@@ -1,14 +1,12 @@
 # Sage Clinical Agent 🌿
 
-An interactive **demo prototype** of an autonomous neurology clinical agent for **Dr. Evelyn Young**. Sage simulates ambient scribing, patient intake, prior authorization, clinical decision support (CDS), and revenue cycle management (RCM) — with a separate **Tech Console** that demonstrates multi-agent orchestration (ADK), MCP servers, security controls, and an Agents CLI.
+A neurology-focused clinical automation dashboard that simulates an autonomous healthcare agent for ambient scribing, prior authorization, patient intake, clinical decision support (CDS), and revenue cycle management (RCM) — backed by a demonstrated multi-agent system, MCP server inspector, security controls, and an Agents CLI (the **Agent Studio / ADK** console).
 
-> **Important:** This is not a production clinical system. Workflows run on **mock data and browser-side simulators** in `DashboardContext.jsx`. There is no live EHR, payer portal, or Gemini API connection required to run the demo. An optional `backend/` scaffold shows how the same patterns would run on Agent Runtime in production.
-
-Built with React 19, Vite, and Tailwind CSS v4 — light sage theme, master-detail clinical layout, progressive disclosure of technical agent plumbing.
+Built as a single-page React application with live mock data streams, designed for high readability in both light and dark modes.
 
 ---
 
-## Problem
+## Problem (Neurology Example for Demo)
 
 Outpatient neurology clinics face overlapping burdens that compete for physician attention during patient visits:
 
@@ -122,7 +120,7 @@ flowchart TB
   CTX -.->|useDashboard| shell & clinical & studio
 ```
 
-### Agent orchestration (conceptual)
+### Agent orchestration
 
 ```mermaid
 flowchart LR
@@ -151,7 +149,7 @@ flowchart LR
   SC & PO & RC --> EHR & PAY & BIL & IMG
 ```
 
-### Data flow (simulated — no live API)
+### Data flow
 
 ```mermaid
 sequenceDiagram
