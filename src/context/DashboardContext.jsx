@@ -2,16 +2,58 @@ import React, { createContext, useContext, useState, useEffect, useRef } from 'r
 
 const DashboardContext = createContext();
 
-// Pre-defined transcripts to simulate live neurology scribe session
-const MOCK_SCRIBE_STREAM = [
-  { speaker: 'Doctor', text: "Hello, Arthur. Let's review your chronic migraine management since we started topiramate. How many headache days per month are you having now?" },
-  { speaker: 'Patient', text: "Down from about fifteen to eight, but I still get two or three migraines a week with visual aura. The morning headaches wake me up sometimes." },
-  { speaker: 'Doctor', text: "I see. Your ambulatory EEG summary shows stable alpha rhythms overnight, and ICP trending at 11 mmHg on the last monitoring pass. Any new weakness, numbness, or speech changes?" },
-  { speaker: 'Patient', text: "No weakness or speech issues. The tingling in my left hand happens maybe once a week, mostly at night." },
-  { speaker: 'Doctor', text: "That pattern is consistent with intermittent peripheral neuropathy. We'll increase topiramate to 50mg nightly, order a brain MRI without contrast to rule out secondary causes, and schedule EMG/NCS for the upper extremities." },
-  { speaker: 'Patient', text: "Okay. Will the MRI need prior authorization again?" },
-  { speaker: 'Doctor', text: "The portal agent is already assembling documentation for CPT 70551. We'll also evaluate CGRP therapy if your headache frequency stays above four per month at the next visit." }
-];
+// Per-patient ambient scribe dialogue (neurology-specific, unique per encounter)
+const MOCK_SCRIBE_STREAMS = {
+  'PT-01': [
+    { speaker: 'Doctor', text: "Hello, Arthur. Let's review your chronic migraine management since we started topiramate. How many headache days per month are you having now?" },
+    { speaker: 'Patient', text: "Down from about fifteen to eight, but I still get two or three migraines a week with visual aura. The morning headaches wake me up sometimes." },
+    { speaker: 'Doctor', text: "Your ambulatory EEG shows stable alpha rhythms overnight, and ICP trending at 11 mmHg. Any new weakness, numbness, or speech changes?" },
+    { speaker: 'Patient', text: "No weakness or speech issues. The tingling in my left hand happens maybe once a week, mostly at night." },
+    { speaker: 'Doctor', text: "We'll increase topiramate to 50mg nightly, order brain MRI without contrast, and schedule EMG/NCS for the upper extremities." },
+    { speaker: 'Patient', text: "Will the MRI need prior authorization again?" },
+    { speaker: 'Doctor', text: "The portal agent is assembling documentation for CPT 70551. We'll evaluate CGRP therapy if frequency stays above four per month." },
+  ],
+  'PT-02': [
+    { speaker: 'Doctor', text: "Good morning, Sarah. You were referred for new daily headaches with visual aura. When did this pattern start?" },
+    { speaker: 'Patient', text: "About three weeks ago. I get a shimmering blind spot in my right eye, then a pounding headache that lasts most of the day." },
+    { speaker: 'Doctor', text: "Any fever, neck stiffness, sudden worst headache of your life, or neurologic symptoms like weakness or slurred speech?" },
+    { speaker: 'Patient', text: "No fever or neck pain. No weakness. The aura lasts twenty to thirty minutes before the headache." },
+    { speaker: 'Doctor', text: "Fundoscopic exam is normal today. Given new onset aura at your age, we need brain MRI and a routine EEG to rule out secondary causes." },
+    { speaker: 'Patient', text: "I've never had migraines before. Is this something serious?" },
+    { speaker: 'Doctor', text: "Most new headache with aura is primary migraine, but we'll confirm with imaging. Start a headache diary and we'll review in two weeks." },
+  ],
+  'PT-03': [
+    { speaker: 'Doctor', text: "Michael, thanks for coming in. Tell me about the tingling you've been having in your hands and feet." },
+    { speaker: 'Patient', text: "It started in my fingertips about two months ago, worse at night. Sometimes I drop things. My feet feel numb when I walk." },
+    { speaker: 'Doctor', text: "Any diabetes history, alcohol use, chemotherapy, or back pain radiating down the legs?" },
+    { speaker: 'Patient', text: "No diabetes. I drink socially. No back pain. I do have mild neck stiffness from desk work." },
+    { speaker: 'Doctor', text: "On exam, sensation is reduced in a stocking-glove pattern. Reflexes are intact. We'll order EMG/NCS of the upper extremities and check B12 and glucose." },
+    { speaker: 'Patient', text: "My primary doctor said it might be carpal tunnel. Could it be both?" },
+    { speaker: 'Doctor', text: "Possible. The EMG will differentiate peripheral neuropathy from focal entrapment. We'll coordinate prior auth for CPT 95886 today." },
+  ],
+  'PT-04': [
+    { speaker: 'Doctor', text: "Diana, let's talk about your epilepsy management. You reported two breakthrough seizures last month?" },
+    { speaker: 'Patient', text: "Yes — both were at night. I think I missed one dose of levetiracetam because I fell asleep early." },
+    { speaker: 'Doctor', text: "Your last level was within range, but adherence matters. Any aura, tongue biting, or post-ictal confusion?" },
+    { speaker: 'Patient', text: "I bit my tongue once. My husband said I was confused for ten minutes afterward." },
+    { speaker: 'Doctor', text: "Ambulatory EEG shows stable background without new focal discharges. I'm increasing levetiracetam to 750mg twice daily." },
+    { speaker: 'Patient', text: "Will I need another long EEG study?" },
+    { speaker: 'Doctor', text: "If breakthroughs continue, we'll pursue video EEG. I'm submitting prior auth for vEEG now so we're ready if needed." },
+  ],
+  'PT-05': [
+    { speaker: 'Doctor', text: "Robert, I understand you've had progressive leg weakness over the past month. Walk me through it." },
+    { speaker: 'Patient', text: "My thighs feel heavy climbing stairs. I need the railing. Fine motor in my hands is okay, but my legs fatigue quickly." },
+    { speaker: 'Doctor', text: "Any difficulty swallowing, double vision, or fluctuation of symptoms through the day?" },
+    { speaker: 'Patient', text: "No vision or swallowing problems. It's worse in the evening after I've been on my feet." },
+    { speaker: 'Doctor', text: "Strength is 4+/5 in hip flexors bilaterally, 5/5 in upper extremities. Reflexes are brisk at the knees. We'll obtain CK, TSH, and refer for neuromuscular EMG." },
+    { speaker: 'Patient', text: "My insurance flagged my visit as out-of-network — is that why I'm seeing you today?" },
+    { speaker: 'Doctor', text: "We're resolving eligibility with the portal agent. Clinically, we need to rule out myopathy versus neuromuscular junction disease — I'll expedite the workup." },
+  ],
+};
+
+const getScribeStream = (patientId) => MOCK_SCRIBE_STREAMS[patientId] || MOCK_SCRIBE_STREAMS['PT-01'];
+
+const MOCK_SCRIBE_STREAM = MOCK_SCRIBE_STREAMS['PT-01'];
 
 const INITIAL_SOAP_NOTE = {
   subjective: "Arthur, a 58-year-old male, reports 8 migraine days/month (down from 15) on topiramate 25mg nightly. Describes visual aura and nocturnal awakening headaches. Intermittent left-hand paresthesias without weakness or speech difficulty.",
@@ -42,15 +84,15 @@ const buildPatientEncounters = () => ({
     noteLocked: false,
     isRecording: false,
     scribeIndex: 1,
-    transcript: [MOCK_SCRIBE_STREAM[0]],
+    transcript: [MOCK_SCRIBE_STREAMS['PT-01'][0]],
     soapNote: { ...INITIAL_SOAP_NOTE },
   },
   'PT-02': {
     activeEncounterStep: 'scribe',
     noteLocked: false,
     isRecording: false,
-    scribeIndex: 0,
-    transcript: [],
+    scribeIndex: 1,
+    transcript: [MOCK_SCRIBE_STREAMS['PT-02'][0]],
     soapNote: {
       subjective: 'Sarah, 34-year-old female, presents with 3 weeks of new daily headaches with visual aura. No prior migraine history.',
       objective: 'Neuro exam unremarkable. Fundoscopic exam normal. Ambulatory EEG pending.',
@@ -59,7 +101,7 @@ const buildPatientEncounters = () => ({
     },
   },
   'PT-03': {
-    activeEncounterStep: 'intake',
+    activeEncounterStep: 'scribe',
     noteLocked: false,
     isRecording: false,
     scribeIndex: 0,
@@ -72,11 +114,11 @@ const buildPatientEncounters = () => ({
     },
   },
   'PT-04': {
-    activeEncounterStep: 'prior-auth',
-    noteLocked: true,
+    activeEncounterStep: 'scribe',
+    noteLocked: false,
     isRecording: false,
-    scribeIndex: 0,
-    transcript: [],
+    scribeIndex: 1,
+    transcript: [MOCK_SCRIBE_STREAMS['PT-04'][0]],
     soapNote: {
       subjective: 'Diana reports 2 breakthrough seizures in the past month on current levetiracetam dose.',
       objective: 'EEG: stable background rhythm. Antiepileptic level within range.',
@@ -85,7 +127,7 @@ const buildPatientEncounters = () => ({
     },
   },
   'PT-05': {
-    activeEncounterStep: 'intake',
+    activeEncounterStep: 'scribe',
     noteLocked: false,
     isRecording: false,
     scribeIndex: 0,
@@ -464,10 +506,11 @@ export const DashboardProvider = ({ children }) => {
   };
 
   const resetScribeSession = () => {
+    const stream = getScribeStream(activePatientId);
     updateEncounter(activePatientId, {
-      transcript: [MOCK_SCRIBE_STREAM[0]],
-      scribeIndex: 1,
-      isRecording: true,
+      transcript: stream.length > 0 ? [stream[0]] : [],
+      scribeIndex: stream.length > 1 ? 1 : 0,
+      isRecording: stream.length > 1,
     });
   };
 
@@ -620,21 +663,23 @@ export const DashboardProvider = ({ children }) => {
     return () => clearInterval(interval);
   }, [isRecording]);
 
-  // Ambient Scribe Live Transcript Streaming Simulation
+  // Ambient Scribe Live Transcript Streaming Simulation (per-patient dialogue)
   useEffect(() => {
-    if (!isRecording || activePatientId !== 'PT-01') return;
+    if (!isRecording) return;
+
+    const stream = getScribeStream(activePatientId);
 
     const interval = setInterval(() => {
       setPatientEncounters(prev => {
         const enc = prev[activePatientId];
         if (!enc) return prev;
-        if (enc.scribeIndex >= MOCK_SCRIBE_STREAM.length) {
+        if (enc.scribeIndex >= stream.length) {
           if (enc.isRecording) {
             setAgentLogs(logs => [
               ...logs,
               {
                 id: logs.length + 1,
-                text: '[Scribe Agent] Scribe session complete. Structured clinical SOAP note finalized and verified.',
+                text: `[Scribe Agent] Scribe session complete for ${activePatientId}. SOAP draft ready for review.`,
                 type: 'success',
                 time: nowTime(),
               },
@@ -646,11 +691,12 @@ export const DashboardProvider = ({ children }) => {
           };
         }
         const idx = enc.scribeIndex;
+        const line = stream[idx];
         setAgentLogs(logs => [
           ...logs,
           {
             id: logs.length + 1,
-            text: `[Scribe Agent] Appending dialogue block from ${MOCK_SCRIBE_STREAM[idx].speaker}...`,
+            text: `[Scribe Agent] Appending dialogue block from ${line.speaker} (${activePatientId})...`,
             type: 'scribe',
             time: nowTime(),
           },
@@ -659,9 +705,9 @@ export const DashboardProvider = ({ children }) => {
           ...prev,
           [activePatientId]: {
             ...enc,
-            transcript: [...enc.transcript, MOCK_SCRIBE_STREAM[idx]],
+            transcript: [...enc.transcript, line],
             scribeIndex: idx + 1,
-            isRecording: idx + 1 < MOCK_SCRIBE_STREAM.length,
+            isRecording: idx + 1 < stream.length,
           },
         };
       });

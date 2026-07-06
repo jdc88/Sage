@@ -6,7 +6,7 @@ import { ClinicalAlertsDrawer } from './ClinicalAlertsDrawer';
 import { PriorAuthView } from './PriorAuthView';
 import { RcmCdsView } from './RcmCdsView';
 import {
-  Play, ChevronDown, ChevronUp, Copy, Download, Save, Lock, Volume2, Check,
+  Play, Copy, Download, Save, Lock, Volume2, Check, Mic,
   ShieldCheck, Clock, AlertCircle,
 } from 'lucide-react';
 
@@ -97,6 +97,7 @@ const IntakePanel = () => {
 export const ClinicalWorkspace = () => {
   const {
     currentPatient,
+    activePatientId,
     activeEncounterStep,
     isRecording,
     setIsRecording,
@@ -108,7 +109,6 @@ export const ClinicalWorkspace = () => {
     lockNote,
   } = useDashboard();
 
-  const [showTranscript, setShowTranscript] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
@@ -136,23 +136,98 @@ export const ClinicalWorkspace = () => {
       case 'scribe':
       default:
         return (
-          <div className="space-y-8">
-            <article className="surface-card rounded-2xl p-8 md:p-10 space-y-8 shadow-sm">
-              <header className="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
+          <div key={activePatientId} className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-start">
+            {/* Left — ambient transcript chat */}
+            <section className="surface-card rounded-2xl flex flex-col h-[min(720px,calc(100vh-16rem))] shadow-sm overflow-hidden">
+              <header className="px-5 py-4 border-b border-slate-200/80 shrink-0">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <Volume2 className="w-4 h-4 text-teal-600" />
+                    <h2 className="text-sm font-bold text-slate-900 m-0">Ambient transcript</h2>
+                  </div>
+                  {isRecording && (
+                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-rose-600">
+                      <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+                      Recording
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-slate-500 mt-1 mb-0">Live dialogue · feeds SOAP synthesis</p>
+              </header>
+
+              <div className="flex-1 overflow-y-auto px-4 py-5 space-y-4 bg-slate-50/50">
+                {transcript.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-full min-h-[200px] text-center px-4">
+                    <Mic className="w-8 h-8 text-slate-300 mb-3" />
+                    <p className="text-sm text-slate-500 m-0">No transcript yet.</p>
+                    <p className="text-xs text-slate-400 mt-1 mb-0">Start a session to capture the visit.</p>
+                  </div>
+                ) : (
+                  transcript.map((msg, idx) => {
+                    const isDoctor = msg.speaker === 'Doctor';
+                    return (
+                      <div
+                        key={idx}
+                        className={`flex ${isDoctor ? 'justify-end' : 'justify-start'}`}
+                      >
+                        <div
+                          className={`max-w-[88%] rounded-2xl px-4 py-3 ${
+                            isDoctor
+                              ? 'bg-teal-600 text-white rounded-br-md'
+                              : 'bg-white border border-slate-200/80 text-slate-700 rounded-bl-md shadow-sm'
+                          }`}
+                        >
+                          <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 m-0 ${
+                            isDoctor ? 'text-teal-100' : 'text-slate-500'
+                          }`}>
+                            {msg.speaker}
+                          </p>
+                          <p className={`text-sm leading-relaxed m-0 ${isDoctor ? 'text-white' : 'text-slate-700'}`}>
+                            {msg.text}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              <footer className="px-4 py-4 border-t border-slate-200/80 bg-white shrink-0 flex gap-2">
+                <button
+                  type="button"
+                  onClick={resetScribeSession}
+                  disabled={isRecording || noteLocked}
+                  className="inline-flex items-center gap-2 flex-1 justify-center py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold disabled:opacity-40"
+                >
+                  <Play className="w-3.5 h-3.5 fill-white" />
+                  Start session
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsRecording(false)}
+                  disabled={!isRecording}
+                  className="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-40"
+                >
+                  Pause
+                </button>
+              </footer>
+            </section>
+
+            {/* Right — clinical SOAP note */}
+            <article className="surface-card rounded-2xl p-6 md:p-8 space-y-6 shadow-sm">
+              <header className="flex flex-col gap-4">
                 <div>
-                  <h2 className="text-xl font-bold text-slate-900 dark:text-slate-50 m-0">
-                    Clinical SOAP Note
-                  </h2>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 mb-0">
+                  <h2 className="text-xl font-bold text-slate-900 m-0">Clinical SOAP Note</h2>
+                  <p className="text-sm text-slate-500 mt-1 mb-0">
                     {noteLocked ? 'Signed and locked' : 'AI draft — review before attestation'}
                   </p>
                 </div>
-                <div className="flex flex-wrap gap-3">
+                <div className="flex flex-wrap gap-2">
                   <button
                     type="button"
                     onClick={handleCopy}
                     disabled={noteLocked}
-                    className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-xl border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50"
+                    className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-xl border border-slate-200 hover:bg-slate-50 disabled:opacity-50"
                   >
                     {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
                     Copy
@@ -160,7 +235,7 @@ export const ClinicalWorkspace = () => {
                   <button
                     type="button"
                     onClick={handleDownload}
-                    className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-xl border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800"
+                    className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-xl border border-slate-200 hover:bg-slate-50"
                   >
                     <Download className="w-4 h-4" />
                     Export
@@ -169,7 +244,7 @@ export const ClinicalWorkspace = () => {
                     type="button"
                     onClick={lockNote}
                     disabled={noteLocked}
-                    className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold rounded-xl bg-teal-600 hover:bg-teal-700 text-white disabled:opacity-60 shadow-md shadow-teal-600/20"
+                    className="flex items-center gap-2 px-4 py-2 text-sm font-bold rounded-xl bg-teal-600 hover:bg-teal-700 text-white disabled:opacity-60 shadow-md shadow-teal-600/20"
                   >
                     {noteLocked ? <Lock className="w-4 h-4" /> : <Save className="w-4 h-4" />}
                     {noteLocked ? 'Locked' : 'Save & Lock'}
@@ -177,7 +252,7 @@ export const ClinicalWorkspace = () => {
                 </div>
               </header>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-5">
                 {[
                   { key: 'subjective', label: 'Subjective' },
                   { key: 'objective', label: 'Objective' },
@@ -185,70 +260,21 @@ export const ClinicalWorkspace = () => {
                   { key: 'plan', label: 'Plan' },
                 ].map(({ key, label }) => (
                   <div key={key} className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
                       {label}
                     </label>
                     <textarea
                       value={soapNote[key]}
                       onChange={(e) => updateSoapNoteSection(key, e.target.value)}
                       disabled={noteLocked}
-                      rows={6}
+                      rows={5}
                       placeholder={`Enter ${label.toLowerCase()}…`}
-                      className="w-full p-4 text-sm leading-relaxed rounded-2xl bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/15 outline-none text-slate-800 dark:text-slate-100 disabled:opacity-70 resize-none"
+                      className="w-full p-4 text-sm leading-relaxed rounded-2xl bg-white border border-slate-200 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/15 outline-none text-slate-800 disabled:opacity-70 resize-none"
                     />
                   </div>
                 ))}
               </div>
             </article>
-
-            <div className="rounded-2xl border border-slate-200/70 dark:border-slate-700/50 overflow-hidden">
-              <button
-                type="button"
-                onClick={() => setShowTranscript(v => !v)}
-                className="w-full flex items-center justify-between px-6 py-4 text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-50/80 dark:hover:bg-slate-900/30"
-              >
-                <span className="flex items-center gap-2">
-                  <Volume2 className="w-4 h-4" />
-                  Ambient transcript
-                  {isRecording && <span className="text-rose-500 font-medium">· Recording</span>}
-                </span>
-                {showTranscript ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-              </button>
-              {showTranscript && (
-                <div className="px-6 pb-6 space-y-4 border-t border-slate-100 dark:border-slate-800">
-                  <div className="flex gap-3 pt-4">
-                    <button
-                      type="button"
-                      onClick={resetScribeSession}
-                      disabled={isRecording || noteLocked}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-teal-600 text-white text-xs font-bold disabled:opacity-40"
-                    >
-                      <Play className="w-3.5 h-3.5 fill-white" />
-                      Start session
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setIsRecording(false)}
-                      disabled={!isRecording}
-                      className="px-4 py-2 rounded-xl border text-xs font-bold disabled:opacity-40"
-                    >
-                      Pause
-                    </button>
-                  </div>
-                  <div className="space-y-3 max-h-40 overflow-y-auto">
-                    {transcript.length === 0 ? (
-                      <p className="text-sm text-slate-500 dark:text-slate-400 m-0">No transcript yet. Start an ambient scribe session.</p>
-                    ) : (
-                      transcript.map((msg, idx) => (
-                        <p key={idx} className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed m-0">
-                          <span className="font-semibold text-slate-500">{msg.speaker}:</span> {msg.text}
-                        </p>
-                      ))
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
           </div>
         );
     }
