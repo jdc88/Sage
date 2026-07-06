@@ -80,7 +80,7 @@ const INITIAL_QUEUE = [
 
 const buildPatientEncounters = () => ({
   'PT-01': {
-    activeEncounterStep: 'scribe',
+    activeEncounterStep: 'intake',
     noteLocked: false,
     isRecording: false,
     scribeIndex: 1,
@@ -88,7 +88,7 @@ const buildPatientEncounters = () => ({
     soapNote: { ...INITIAL_SOAP_NOTE },
   },
   'PT-02': {
-    activeEncounterStep: 'scribe',
+    activeEncounterStep: 'intake',
     noteLocked: false,
     isRecording: false,
     scribeIndex: 1,
@@ -101,7 +101,7 @@ const buildPatientEncounters = () => ({
     },
   },
   'PT-03': {
-    activeEncounterStep: 'scribe',
+    activeEncounterStep: 'intake',
     noteLocked: false,
     isRecording: false,
     scribeIndex: 0,
@@ -114,7 +114,7 @@ const buildPatientEncounters = () => ({
     },
   },
   'PT-04': {
-    activeEncounterStep: 'scribe',
+    activeEncounterStep: 'intake',
     noteLocked: false,
     isRecording: false,
     scribeIndex: 1,
@@ -127,7 +127,7 @@ const buildPatientEncounters = () => ({
     },
   },
   'PT-05': {
-    activeEncounterStep: 'scribe',
+    activeEncounterStep: 'intake',
     noteLocked: false,
     isRecording: false,
     scribeIndex: 0,
