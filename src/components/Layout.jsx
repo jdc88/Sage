@@ -91,6 +91,12 @@ export const Layout = ({ children }) => {
           </div>
         </main>
       </div>
+
+      <footer className="shrink-0 border-t border-slate-200/80 bg-white/80 px-5 md:px-8 py-3">
+        <p className="text-center text-[11px] text-slate-500 m-0">
+          © {new Date().getFullYear()} Sage Clinical Agent by Josephine Choi. All rights reserved.
+        </p>
+      </footer>
     </div>
   );
 };
