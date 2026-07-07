@@ -421,22 +421,6 @@ Deploy the `dist/` folder to **Vercel** (or any static host). Typical workflow: 
 
 ---
 
-## Limitations
-
-- **Prototype only** — simulated transcripts, claims, MCP latency, and agent logs
-- **No real PHI** — mock patient names; redaction demos use sample tokens
-- **No production API** — optional `backend/` illustrates patterns; not wired to Epic, UHC, or live Gemini unless you deploy and configure ADK yourself
-- **Per-patient state** is in-memory; refresh resets the session
-
-### Possible extensions
-
-- Live WebSocket backend for vitals and claim status
-- FHIR patient layer
-- Production ADK deployment on Vertex AI Agent Runtime
-- CI accessibility and runtime validation (`scripts/validate_agent_runtime.sh`)
-
----
-
 ## Implementation documentation
 
 - [`implementation_plan_neurology.md`](implementation_plan_neurology.md) — Cardiology → neurology transition
@@ -446,9 +430,5 @@ Deploy the `dist/` folder to **Vercel** (or any static host). Typical workflow: 
 ---
 
 ## License
-
-Private / course submission use. Update this section if you publish under an open-source license.
-
----
 
 © 2026 Josephine Choi. All rights reserved.
