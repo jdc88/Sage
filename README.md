@@ -80,7 +80,7 @@ Sage uses a **full-height master-detail shell** (`h-screen`, fixed queue + scrol
 ║  └────────────────┘║  └─────────────────────────────────────────────┘    ║
 ║  ┌────────────────┐║  ▸ Ambient transcript (collapsed by default)        ║
 ║  │  Michael       │║  ▸ Patient monitor — ICP / Alpha (this pt only)     ║
-║  │  ⏳ Pending     │║                                                    ║
+║  │  *Pending*     │║                                                     ║
 ║  │  [Verify]      │║  [ Clinical Alerts ]  ← badge only if pt has alerts ║
 ║  └────────────────┘║                                                     ║
 ║  ┌────────────────┐║                                                     ║
