@@ -42,7 +42,7 @@ Traditional agent dashboards expose raw telemetry (JSON state, message buses, gl
 ### Tech Console (gear icon → “Back to clinic” to return)
 
 - **Multi-Agent** — Orchestrator + Scribe, Portal, and RCM agents; message bus and task queues
-- **MCP Inspector** — EHR, Payer, Billing, and Imaging MCP servers with tool-call traces
+- **MCP Inspector** — EHR, Payer, Billing, and Imaging (PACS) MCP servers with tool-call traces
 - **Security** — RBAC scope, PHI redaction log, credential vault, audit trail
 - **Agents CLI** — Named skills (`/agents list`, `/skill run intake.verify PT-03`, etc.)
 
@@ -170,11 +170,18 @@ flowchart TB
 
 ### Agent orchestration
 
+Physicians interact with the **Clinical Workspace**; the **Orchestrator** routes work to specialist agents. Each agent calls only the MCP servers it needs — not every server.
+
 ```mermaid
-flowchart LR
-  subgraph clinic [Clinical UI]
-    Q[Queue]
-    S[Scribe / SOAP]
+flowchart TB
+  subgraph ui [Clinical UI — physician-facing]
+    Q[Today's Queue]
+    CW[Clinical Workspace]
+    Q --> CW
+    CW --> Intake[Intake]
+    CW --> Scribe[Scribe / SOAP]
+    CW --> Auth[Prior Auth]
+    CW --> Bill[Billing]
   end
 
   subgraph agents [ADK Multi-Agent — simulated]
@@ -188,13 +195,47 @@ flowchart LR
     EHR[EHR MCP]
     PAY[Payer MCP]
     BIL[Billing MCP]
-    IMG[Imaging MCP]
+    IMG[Imaging / PACS MCP]
   end
 
-  Q --> O
-  S --> SC
-  O --> SC & PO & RC
-  SC & PO & RC --> EHR & PAY & BIL & IMG
+  CW --> O
+  O --> SC
+  O --> PO
+  O --> RC
+
+  SC --> EHR
+  PO --> PAY
+  PO --> IMG
+  RC --> BIL
+```
+
+| Agent | Role | MCP servers |
+|-------|------|-------------|
+| **Orchestrator** | Routes tasks to sub-agents; monitors agent registry | Registry / audit tools (no direct EHR or payer calls) |
+| **Scribe Agent** | Ambient dialogue → structured SOAP note | **EHR MCP** — `ehr.getPatientContext`, `ehr.writeSoapDraft` |
+| **Portal Agent** | Eligibility, prior auth, payer portal navigation | **Payer MCP** — eligibility and auth submission; **Imaging MCP** — `imaging.attachClinicalPacket` for auth bundles |
+| **RCM Agent** | Claims status, denials, appeals | **Billing MCP** — `claims.fetchStatus`, `claims.createAppeal`, `billing.auditTrail` |
+
+#### MCP server registry
+
+| Server | Endpoint | Key tools |
+|--------|----------|-----------|
+| **EHR MCP** | `mcp://ehr.internal:8001` | `ehr.getPatientContext`, `ehr.writeSoapDraft`, `ehr.attachNeuroExam` |
+| **Payer MCP** | `mcp://payer.clearinghouse:8002` | `payer.checkEligibility`, `payer.submitPriorAuth`, `payer.fetchDecision` |
+| **Billing MCP** | `mcp://billing.internal:8003` | `claims.fetchStatus`, `claims.createAppeal`, `billing.auditTrail` |
+| **Imaging MCP** | `mcp://pacs.internal:8004` | `imaging.attachClinicalPacket`, `imaging.fetchStudy`, `imaging.orderMRI` |
+
+#### Tech Console routing
+
+Engineering surfaces are isolated from the clinical layout — opened via the header **gear** icon:
+
+```mermaid
+flowchart LR
+  CW[Clinical Workspace] -->|gear icon| TC[Tech Console]
+  TC --> MA[Multi-Agent View]
+  TC --> MCP[MCP Inspector]
+  TC --> SEC[Security]
+  TC --> CLI[Agents CLI]
 ```
 
 ### Data flow
