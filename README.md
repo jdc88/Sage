@@ -71,7 +71,7 @@ Sage uses a **full-height master-detail shell** (`h-screen`, fixed queue + scrol
 ║  (320px sidebar)   ║  ─────────────────────────────────────────────────  ║
 ║                    ║  Arthur Pendelton · Chronic Migraine F/U · 09:00    ║
 ║  ┌────────────────┐║  ┌────────┐ ┌────────┐ ┌────────────┐ ┌────────┐    ║
-║  │● Arthur        │║  │ Intake  │ │ Scribe │ │ Prior Auth │ │Billing │   ║
+║  │● Arthur        │║  │ Intake │ │ Scribe │ │ Prior Auth │ │Billing │    ║
 ║  │  ✓ Eligible    │║  └────────┘ └────────┘ └────────────┘ └────────┘    ║
 ║  └────────────────┘║                                                     ║
 ║  ┌────────────────┐║  ┌─────────────────────────────────────────────┐    ║
